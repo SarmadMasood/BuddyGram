@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15702" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_5" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15704"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purple back ground 2" translatesAutoresizingMaskIntoConstraints="NO" id="pBo-2y-quG">
+                                <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="BuddyGram logo" translatesAutoresizingMaskIntoConstraints="NO" id="x2c-Ww-5aW">
+                                <rect key="frame" x="72" y="219" width="270" height="178"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="178" id="U6C-Ef-bhw"/>
+                                    <constraint firstAttribute="width" constant="270" id="bf0-fA-bNp"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="pBo-2y-quG" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="6h4-dX-sBw"/>
+                            <constraint firstItem="pBo-2y-quG" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Hlp-ml-wQE"/>
+                            <constraint firstItem="x2c-Ww-5aW" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="175" id="WkX-Nd-eub"/>
+                            <constraint firstItem="pBo-2y-quG" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="hdL-bz-Anw"/>
+                            <constraint firstItem="pBo-2y-quG" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="topMargin" constant="-44" id="qad-I2-myg"/>
+                            <constraint firstItem="x2c-Ww-5aW" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="w2H-ei-866"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="52.173913043478265" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="BuddyGram logo" width="1024" height="1024"/>
+        <image name="purple back ground 2" width="487" height="918"/>
+    </resources>
+</document>
