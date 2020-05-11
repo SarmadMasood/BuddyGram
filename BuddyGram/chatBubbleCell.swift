@@ -9,11 +9,14 @@
 import UIKit
 
 class chatBubbleCell: UICollectionViewCell {
+    var message: Message!
+    
     let playButton: UIButton = {
         let b = UIButton(type: .system)
         b.setImage(UIImage(named: "PlayButton"), for: .normal)
         b.translatesAutoresizingMaskIntoConstraints = false
         b.tintColor = UIColor.darkGray
+        b.isUserInteractionEnabled = false
         return b
     }()
     

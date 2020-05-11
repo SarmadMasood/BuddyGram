@@ -14,6 +14,10 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
     let newChatVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "NewChat") as! NewChatViewController
     
     @IBOutlet weak var tableView: UITableView!
+    
+//    override func viewWillAppear(_ animated: Bool) {
+//        tableView.reloadData()
+//    }
    // var contact: Contact?
     var contacts = [Contact]()
     

@@ -34,7 +34,7 @@ class ViewController: UIViewController ,UITextFieldDelegate{
 //                self.present(vc, animated: true, completion: nil)
 //            }
 //        })
-        
+//
         let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
                         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
                         self.present(vc, animated: true, completion: nil)

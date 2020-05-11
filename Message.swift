@@ -21,6 +21,9 @@ class Message: NSObject {
     var fileName: String?
     var fileExt: String?
     var fileURL: String?
+    var audioURL: String?
+    var audioDuration: NSNumber?
+    
     
     init(dictionary: [String: Any]) {
         super.init()
@@ -35,6 +38,8 @@ class Message: NSObject {
         fileName = dictionary["filename"] as? String
         fileExt = dictionary["ext"] as? String
         fileURL = dictionary["fileURL"] as? String
+        audioURL = dictionary["audioURL"] as? String
+        audioDuration = dictionary["audioDuration"] as? NSNumber
     }
     
     func getChatPartnerID() -> String {
