@@ -12,6 +12,7 @@ import Firebase
 class ViewController: UIViewController ,UITextFieldDelegate{
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        
         textField.resignFirstResponder()
         return true
     }
@@ -34,7 +35,7 @@ class ViewController: UIViewController ,UITextFieldDelegate{
 //                self.present(vc, animated: true, completion: nil)
 //            }
 //        })
-//
+
         let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
                         vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
                         self.present(vc, animated: true, completion: nil)
@@ -69,7 +70,7 @@ class ViewController: UIViewController ,UITextFieldDelegate{
     @IBAction func cancelToSignIn(_ segue: UIStoryboardSegue) {
         
     }
-
+ 
 }
 
 

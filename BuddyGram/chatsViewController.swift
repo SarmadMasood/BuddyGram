@@ -11,6 +11,10 @@ import Firebase
 import Contacts
 
 class chatsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UINavigationControllerDelegate{
+    @IBOutlet weak var loadingView: UIView!
+    @IBOutlet weak var loadingLabel: UILabel!
+    @IBOutlet weak var indicator: UIActivityIndicatorView!
+    
     let newChatVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "NewChat") as! NewChatViewController
     
     @IBOutlet weak var tableView: UITableView!
@@ -67,14 +71,28 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
     var messagesDictionary = [String: Message]()
     var messages = [Message]()
     
-    
-    
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        
+        
+        indicator.hidesWhenStopped = true
+        loadingView.layer.cornerRadius = 10
+        loadingView.clipsToBounds = true
+        
+        if tableView.visibleCells.isEmpty {
+            loadingView.isHidden = false
+            loadingLabel.isHidden = false
+            indicator.startAnimating()
+        }else{
+            loadingView.isHidden = true
+            loadingLabel.isHidden = true
+        }
+        
+        observeUserMessages()
         fetchContacts()
         newChatVC.fetchUsers()
-        observeUserMessages()
       
         if #available(iOS 10.0, *) {
             self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.font: UIFont(name: "Arial Rounded MT Bold", size: 20)!, NSAttributedString.Key.foregroundColor: UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)]
@@ -108,23 +126,34 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
         }
         let ref = Database.database().reference().child("userMessages").child(uid)
         ref.observe(.childAdded) { (snapshot) in
-            let msgID = snapshot.key
-            let msgRef = Database.database().reference().child("messages").child(msgID)
-            msgRef.observeSingleEvent(of: .value) { (snap) in
-                 if let dictionary = snap.value as? [String: AnyObject] {
-                                   //print(snapshot)
-                let message = Message(dictionary: dictionary)
-                    let partnerID = message.getChatPartnerID()
-                                    
-                    self.messagesDictionary[partnerID] = message
-                    self.messages = Array(self.messagesDictionary.values)
-                    self.messages.sort (by: { (msg1, msg2) -> Bool in
+            if snapshot.exists() {
+                let msgID = snapshot.key
+                let msgRef = Database.database().reference().child("messages").child(msgID)
+                msgRef.observeSingleEvent(of: .value) { (snap) in
+                     if let dictionary = snap.value as? [String: AnyObject] {
+                                       //print(snapshot)
+                    let message = Message(dictionary: dictionary)
+                        let partnerID = message.getChatPartnerID()
                                         
-                        return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
-                    })
-                    DispatchQueue.main.async {self.tableView.reloadData()}
+                        self.messagesDictionary[partnerID] = message
+                        self.messages = Array(self.messagesDictionary.values)
+                        self.messages.sort (by: { (msg1, msg2) -> Bool in
+                                            
+                            return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
+                        })
+                        DispatchQueue.main.async {self.tableView.reloadData()
+                            self.indicator.stopAnimating()
+                            self.loadingView.isHidden = true
+                            self.loadingLabel.isHidden = true
+                        }
+                    }
                 }
             }
+        }
+        DispatchQueue.main.async {self.tableView.reloadData()
+            self.indicator.stopAnimating()
+            self.loadingView.isHidden = true
+            self.loadingLabel.isHidden = true
         }
     }
     

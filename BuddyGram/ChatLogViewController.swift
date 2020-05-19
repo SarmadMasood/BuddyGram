@@ -15,13 +15,16 @@ import AVKit
 let imageCache = NSCache<NSString, UIImage>()
 
 class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIDocumentPickerDelegate,UIDocumentInteractionControllerDelegate{
+    
+    @IBOutlet weak var indicator: UIActivityIndicatorView!
+    
     @IBOutlet weak var recordTimer: UILabel!
     
     @IBOutlet weak var audioMessageButton: UIButton!
     @IBOutlet weak var attachButton: UIButton!
     var selectedIndexPath: IndexPath!
     var soundRecorder : AVAudioRecorder!
-    var audioFilePath: URL?
+   // var audioFilePath: URL?
     
     var messages = [Message]()
     let currentUserEmail = Auth.auth().currentUser?.email
@@ -43,7 +46,8 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         
         let message = messages[indexPath.item]
         if let fileURL = message.fileURL {
-            
+            indicator.startAnimating()
+            indicator.isHidden = false
             let url = URL(string: fileURL)
             URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
                        
@@ -53,6 +57,8 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                     let file = self.getDocumentsDirectory()?.appendingPathComponent(message.fileName!).appendingPathExtension(message.fileExt!)
                    let docC = UIDocumentInteractionController(url: file!)
                    docC.delegate = self
+                    self.indicator.isHidden = true
+                    self.indicator.stopAnimating()
                    docC.presentPreview(animated: true)
                     })
                 }).resume()
@@ -116,6 +122,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     let docPicker = UIDocumentPickerViewController(documentTypes: [String(kUTTypeItem)], in: .import)
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        self.msgInputField.text = "UPLOADING MESSAGE..."
         let filename = urls.first!.lastPathComponent
         let ext = urls.first!.pathExtension
         let url = urls.first
@@ -139,7 +146,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         ref.putFile(from: url!, metadata: nil) { (metadata, err) in
             ref.downloadURL { (downloadURL, error) in
 
-                let values = ["ext": ext,"fileURL": downloadURL?.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
+                let values = ["isSeen": "false","ext": ext,"fileURL": downloadURL?.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
                 self.uploadMsgWithValues(values: values)
             }
         }
@@ -148,6 +155,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     let imagePickerController = UIImagePickerController()
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        self.msgInputField.text = "UPLOADING MESSAGE..."
         let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         
         if let videoURL = (info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.mediaURL)]) as? URL{
@@ -227,11 +235,9 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                     let asset = AVURLAsset(url: localURL)
                     let duration = asset.duration.seconds;
                     
-                    let values = ["filename": path,"text": "Audio","audioURL": downloadURL?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration] as [String : Any]
+                    let values = ["isSeen": "false","filename": path,"text": "Audio","audioURL": downloadURL?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration] as [String : Any]
                     self.uploadMsgWithValues(values: values)
-                    
                 })
-                
         })
     }
     
@@ -250,7 +256,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             fromID = self.currentUserPhone
         }
         let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["text": "Photo","imageURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height] as [String : Any]
+        let values = ["isSeen": "false","text": "Photo","imageURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height] as [String : Any]
         self.uploadMsgWithValues(values: values)
     }
     
@@ -291,7 +297,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         if let uploadData = image.jpegData(compressionQuality: 0.2) {
             ref.putData(uploadData, metadata: nil) { (metaData, error) in
                 ref.downloadURL { (imageURL, err) in
-                    let values = ["text": "Video","videoURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image.size.height,"imageWidth": image.size.width,"imageURL": imageURL?.absoluteString] as [String : Any]
+                    let values = ["isSeen": "false","text": "Video","videoURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image.size.height,"imageWidth": image.size.width,"imageURL": imageURL?.absoluteString] as [String : Any]
                     self.uploadMsgWithValues(values: values)
                 }
             }
@@ -398,6 +404,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                 setupAudioCell(audioCell, message: message)
                 audioCell.message = message
                 
+                if message.isSeen == "true" {
+                    audioCell.readReceipt.image = UIImage(named: "seen")
+                }else{
+                    audioCell.readReceipt.image = UIImage(named: "delivered")
+                }
+                
                 return audioCell
             }
             
@@ -406,11 +418,16 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             
                 setupFileCell(fileCell, message: message)
                 
-                
+                if message.isSeen == "true" {
+                    fileCell.readReceipt.image = UIImage(named: "seen")
+                }else{
+                    fileCell.readReceipt.image = UIImage(named: "delivered")
+                }
                 
                 fileCell.isUserInteractionEnabled = true
                 return fileCell
             }
+            
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "chatBubble", for: indexPath) as! chatBubbleCell
             
             
@@ -420,7 +437,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             
             if let text = message.text {
                 //a text message
-                cell.bubbleWidthAnchor?.constant = estimateFrameForText(text: text).width + 32
+                if estimateFrameForText(text: text).width < 100 {
+                     cell.bubbleWidthAnchor?.constant = 140
+                }else{
+                    cell.bubbleWidthAnchor?.constant = estimateFrameForText(text: text).width + 32
+                }
+
                 cell.textView.isHidden = false
                 //cell.isUserInteractionEnabled = false
             }
@@ -440,6 +462,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                 let formatter = DateFormatter()
                 formatter.dateFormat = "hh:mm a"
                 cell.msgTime.text = formatter.string(from: date)
+            }
+            
+            if message.isSeen == "true" {
+                cell.readReceipt.image = UIImage(named: "seen")
+            }else{
+                cell.readReceipt.image = UIImage(named: "delivered")
             }
             
             cell.playButton.isHidden = message.videoURL == nil
@@ -463,10 +491,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
   fileprivate func setupAudioCell(_ cell: ChatBubbleAudioCell, message: Message) {
       if message.fromID == currentUserEmail ||  message.fromID == currentUserPhone{
           //outgoing blue
-          cell.bubbleView.backgroundColor = UIColor.purple
+          cell.bubbleView.backgroundColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
           cell.timerLabel.textColor = UIColor.white
           cell.msgTime.textColor = UIColor.white
           cell.slider.tintColor = UIColor.white
+        cell.readReceipt.isHidden = false
+        cell.readReceiptWidth!.constant = 19
         cell.slider.maximumTrackTintColor = UIColor(red: 240/255, green: 240/255, blue: 240/255, alpha: 1)
 
         
@@ -476,10 +506,12 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
       } else {
           //incoming gray
           cell.bubbleView.backgroundColor = UIColor(red: 240/255, green: 240/255, blue: 240/255, alpha: 1)
-          cell.timerLabel.textColor = UIColor.purple
-          cell.msgTime.textColor = UIColor.purple
-        cell.slider.tintColor = UIColor.purple
-        cell.slider.maximumTrackTintColor = UIColor.purple
+          cell.timerLabel.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+          cell.msgTime.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+        cell.slider.tintColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+        cell.slider.maximumTrackTintColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+        cell.readReceipt.isHidden = true
+        cell.readReceiptWidth!.constant = 0
           
           cell.bubbleRightAnchor?.isActive = false
           cell.bubbleLeftAnchor?.isActive = true
@@ -509,9 +541,11 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     fileprivate func setupFileCell(_ cell: chatBubbleFileCell, message: Message) {
         if message.fromID == currentUserEmail ||  message.fromID == currentUserPhone{
             //outgoing blue
-            cell.bubbleView.backgroundColor = UIColor.purple
+            cell.bubbleView.backgroundColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
             cell.nameLabel.textColor = UIColor.white
             cell.msgTime.textColor = UIColor.white
+            cell.readReceipt.isHidden = false
+            cell.readReceiptWidth!.constant = 19
             
             cell.bubbleRightAnchor?.isActive = true
             cell.bubbleLeftAnchor?.isActive = false
@@ -519,8 +553,10 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         } else {
             //incoming gray
             cell.bubbleView.backgroundColor = UIColor(red: 240/255, green: 240/255, blue: 240/255, alpha: 1)
-            cell.nameLabel.textColor = UIColor.purple
-            cell.msgTime.textColor = UIColor.purple
+            cell.nameLabel.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+            cell.msgTime.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+            cell.readReceipt.isHidden = true
+            cell.readReceiptWidth!.constant = 0
             
             cell.bubbleRightAnchor?.isActive = false
             cell.bubbleLeftAnchor?.isActive = true
@@ -546,9 +582,11 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         
         if message.fromID == currentUserEmail ||  message.fromID == currentUserPhone{
             //outgoing blue
-            cell.bubbleView.backgroundColor = UIColor.purple
+            cell.bubbleView.backgroundColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
             cell.textView.textColor = UIColor.white
             cell.msgTime.textColor = UIColor.white
+            cell.readReceipt.isHidden = false
+            cell.readReceiptWidth!.constant = 19
             
             cell.bubbleRightAnchor?.isActive = true
             cell.bubbleLeftAnchor?.isActive = false
@@ -556,8 +594,10 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         } else {
             //incoming gray
             cell.bubbleView.backgroundColor = UIColor(red: 240/255, green: 240/255, blue: 240/255, alpha: 1)
-            cell.textView.textColor = UIColor.purple
-            cell.msgTime.textColor = UIColor.purple
+            cell.textView.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+            cell.msgTime.textColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+            cell.readReceipt.isHidden = true
+            cell.readReceiptWidth!.constant = 0
             
             cell.bubbleRightAnchor?.isActive = false
             cell.bubbleLeftAnchor?.isActive = true
@@ -609,7 +649,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         super.viewDidLoad()
         observeUserMessages()
 
-        setupRecorder()
+        
         collectionView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         collectionView.register(chatBubbleCell.self, forCellWithReuseIdentifier: "chatBubble")
         collectionView.register(chatBubbleFileCell.self, forCellWithReuseIdentifier: "fileChatBubble")
@@ -626,8 +666,22 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         setupKeyboardObservers()
         collectionView?.alwaysBounceVertical = true
         recordTimer.isHidden = true
-        soundRecorder.isMeteringEnabled = true
-        audioMessageButton.tintColor = UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)
+        soundRecorder = nil
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            if #available(iOS 10.0, *) {
+                try audioSession.setCategory(AVAudioSession.Category.playAndRecord, mode: .spokenAudio, options: .defaultToSpeaker)
+                try audioSession.setCategory(AVAudioSession.Category.playback,options: .mixWithOthers )
+            } else {
+                // Fallback on earlier versions
+            }
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("error.")
+        }
+        indicator.isHidden = true
+        indicator.style = UIActivityIndicatorView.Style.whiteLarge
+        indicator.color = UIColor.darkGray
         // Do any additional setup after loading the view.
     }
     
@@ -653,36 +707,36 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         setupKeyboardObservers()
     }
         
-        override func viewDidDisappear(_ animated: Bool) {
+    override func viewDidDisappear(_ animated: Bool) {
             super.viewDidDisappear(animated)
             
             NotificationCenter.default.removeObserver(self)
-        }
-    @IBOutlet weak var recordTimerBottom: NSLayoutConstraint!
-    @IBOutlet weak var audioMsgBottom: NSLayoutConstraint!
+    }
     
-    @IBOutlet weak var inputFieldBottom: NSLayoutConstraint!
-    @IBOutlet weak var attachBottom: NSLayoutConstraint!
+    
     @objc func handleKeyboardWillShow(_ notification: Notification) {
             let keyboardFrame = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as AnyObject).cgRectValue
             let keyboardDuration = (notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as AnyObject).doubleValue
             
-            audioMsgBottom?.constant = +keyboardFrame!.height
-            inputFieldBottom?.constant = +keyboardFrame!.height
-            attachBottom?.constant = +keyboardFrame!.height
+            audioMsgBottom?.constant = +keyboardFrame!.height-43
+            inputFieldBottom?.constant = +keyboardFrame!.height-45
+            attachBottom?.constant = +keyboardFrame!.height-44
             
     
             UIView.animate(withDuration: keyboardDuration!, animations: {
                 self.view.layoutIfNeeded()
             })
         }
-        
+    @IBOutlet weak var audioMsgBottom: NSLayoutConstraint!
+    @IBOutlet weak var attachBottom: NSLayoutConstraint!
+    @IBOutlet weak var inputFieldBottom: NSLayoutConstraint!
+    
     @objc func handleKeyboardWillHide(_ notification: Notification) {
         let keyboardDuration = (notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as AnyObject).doubleValue
             
-            audioMsgBottom?.constant = 10
-            inputFieldBottom?.constant = 9
-            attachBottom?.constant = 10
+            audioMsgBottom?.constant = 7
+            inputFieldBottom?.constant = 5
+            attachBottom?.constant = 6
         
             UIView.animate(withDuration: keyboardDuration!, animations: {
                 self.view.layoutIfNeeded()
@@ -709,9 +763,9 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             fromID = phone
         }
         let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
+        let values = ["isSeen": "false","text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
         uploadMsgWithValues(values: values)
-        self.msgInputField.text = nil
+        self.msgInputField.text = "UPLOADING MESSAGE..."
        
         return true
     }
@@ -744,6 +798,10 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     }
     var timer = Timer()
     @IBAction func recordAudio(_ sender: Any) {
+        if soundRecorder == nil {
+            setupRecorder()
+        }
+        
         
         if audioMessageButton.image(for: .normal) == UIImage(named: "Voice Message icon") {
             audioMessageButton.setImage(UIImage(named: "Send"), for: .normal)
@@ -760,8 +818,6 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         }
     }
     
-    
-    
     func observeUserMessages(){
         guard let uid = Auth.auth().currentUser?.uid else {
             return
@@ -772,16 +828,28 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             let msgRef = Database.database().reference().child("messages").child(msgID)
             msgRef.observeSingleEvent(of: .value) { (snap) in
                  if let dictionary = snap.value as? [String: AnyObject] {
-                                   
+                             var  temp = dictionary
                     let message = Message(dictionary: dictionary)
+                    if (message.toID == self.currentUserEmail || message.toID == self.currentUserPhone) && message.isSeen == "false"{
+                        temp["isSeen"] = "true" as AnyObject
+                        msgRef.updateChildValues(temp)
+                    }
                    
                     if(message.getChatPartnerID().isEqual(self.contact?.email) || message.getChatPartnerID().isEqual(self.contact?.phone)){
+                        
                         self.messages.append(message)
-                                           self.collectionView.reloadData()
-                        if self.messages.count > 0 {
-                            let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
-                            self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
-                               }
+                        
+                        DispatchQueue.main.async {
+                            if self.msgInputField.text == "UPLOADING MESSAGE..." {
+                                self.msgInputField.text = nil
+                            }
+                             self.collectionView.reloadData()
+                            if self.messages.count > 0 {
+                                let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                                self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+                            }
+                        }
+    
                     }
                    
                 }
@@ -861,13 +929,13 @@ extension UIImage {
 extension ChatLogViewController: AVAudioRecorderDelegate{
     
     func setupRecorder() {
-        audioFilePath = getDocumentsDirectory()?.appendingPathComponent(UUID().uuidString).appendingPathExtension("m4a")
+        let audioFilePath = getDocumentsDirectory()?.appendingPathComponent(UUID().uuidString).appendingPathExtension("m4a")
         
         let recordSetting = [ AVFormatIDKey : kAudioFormatAppleLossless,
                               AVEncoderAudioQualityKey : AVAudioQuality.min.rawValue,
         AVEncoderBitRateKey : 128000,
         AVNumberOfChannelsKey : 1,
-        AVSampleRateKey : 22050] as [String : Any]
+        AVSampleRateKey : 12000] as [String : Any]
         
         do {
             soundRecorder = try AVAudioRecorder(url: audioFilePath!, settings: recordSetting )
@@ -877,26 +945,15 @@ extension ChatLogViewController: AVAudioRecorderDelegate{
             print(error)
         }
     }
-    
-    func makeCopyAndUpload(){
-        let newFile = UUID().uuidString
-        let newPath = getDocumentsDirectory()?.appendingPathExtension(newFile).appendingPathExtension("m4a")
-        
-        do {
-            try FileManager.default.copyItem(at: audioFilePath!, to: newPath!)
-            sendAudioMsgWithUrl(localURL: newPath!)
-        } catch (let error) {
-            print("Cannot copy item at \(audioFilePath) to \(newPath): \(error)")
-        }
-        
-    }
 
     
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         timer.invalidate()
         msgInputField.isEnabled = true
         recordTimer.isHidden = true
-        makeCopyAndUpload()
+        self.msgInputField.text = "UPLOADING MESSAGE..."
+        sendAudioMsgWithUrl(localURL: recorder.url)
+        self.soundRecorder = nil
     }
     
     func makeCircleWith(size: CGSize, backgroundColor: UIColor) -> UIImage? {
@@ -913,18 +970,4 @@ extension ChatLogViewController: AVAudioRecorderDelegate{
     }
 }
 
-//extension ChatLogViewController: ZoomingViewController {
-//    func zoomingImageView(forTransition: ZoomTransitionDelegate) -> UIImageView? {
-//        if let indexPath = selectedIndexPath {
-//            let cell = collectionView.cellForItem(at: indexPath) as! chatBubbleCell
-//            return cell.imageView
-//        }
-//        
-//        return nil
-//    }
-//    
-//    func zoomingBackgroundView(forTransition: ZoomTransitionDelegate) -> UIView? {
-//        return nil
-//    }
-//    
-//}
+

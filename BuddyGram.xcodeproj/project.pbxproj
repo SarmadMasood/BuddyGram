@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0C386100245A14A900DB38AE /* ChatInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3860FF245A14A900DB38AE /* ChatInfo.swift */; };
+		0C5FC7BA246DDF5E004361AD /* CountryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */; };
+		0C5FC7BC246DEAE3004361AD /* CountryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */; };
 		0C7BA94C246887DF00D9B16E /* ChatBubbleAudioCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */; };
-		0C7E2F212453300B002A46C2 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E2F202453300B002A46C2 /* User.swift */; };
 		0CD62426244DAC17008C7EF7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD62425244DAC17008C7EF7 /* AppDelegate.swift */; };
 		0CD6242A244DAC17008C7EF7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD62429244DAC17008C7EF7 /* ViewController.swift */; };
 		0CD6242D244DAC17008C7EF7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0CD6242B244DAC17008C7EF7 /* Main.storyboard */; };
@@ -36,9 +36,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0C3860FF245A14A900DB38AE /* ChatInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatInfo.swift; sourceTree = "<group>"; };
+		0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryTableViewCell.swift; sourceTree = "<group>"; };
+		0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryTableViewController.swift; sourceTree = "<group>"; };
 		0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleAudioCell.swift; sourceTree = "<group>"; };
-		0C7E2F202453300B002A46C2 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		0CD62422244DAC17008C7EF7 /* BuddyGram.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BuddyGram.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0CD62425244DAC17008C7EF7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0CD62429244DAC17008C7EF7 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -103,8 +103,9 @@
 			isa = PBXGroup;
 			children = (
 				0CF165D7246737A9006A5EEA /* chatBubbleCell.swift */,
-				0CF165C624672FB8006A5EEA /* Assets.xcassets */,
+				0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */,
 				0CF165C024672FB8006A5EEA /* chatBubbleFileCell.swift */,
+				0CF165C624672FB8006A5EEA /* Assets.xcassets */,
 				0CD62429244DAC17008C7EF7 /* ViewController.swift */,
 				0CF165C524672FB8006A5EEA /* ChatLogViewController.swift */,
 				0CF165C124672FB8006A5EEA /* chatsTableViewCell.swift */,
@@ -123,7 +124,8 @@
 				0CF165D924674243006A5EEA /* CreateAccountViewController.swift */,
 				0CF165DB246794D7006A5EEA /* ZoomTransitionDelegate.swift */,
 				0CF165DD2467964C006A5EEA /* ZoomedViewController.swift */,
-				0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */,
+				0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */,
+				0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */,
 			);
 			path = BuddyGram;
 			sourceTree = "<group>";
@@ -132,9 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				0CFD52802451F14000BC5A46 /* Contact.swift */,
-				0C7E2F202453300B002A46C2 /* User.swift */,
 				0CD8A5F1245778C8005FE582 /* Message.swift */,
-				0C3860FF245A14A900DB38AE /* ChatInfo.swift */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -277,13 +277,11 @@
 				0CFD52812451F14000BC5A46 /* Contact.swift in Sources */,
 				0CF165D324672FB8006A5EEA /* chatsViewController.swift in Sources */,
 				0CF165CE24672FB8006A5EEA /* PhoneLoginViewController.swift in Sources */,
-				0C7E2F212453300B002A46C2 /* User.swift in Sources */,
 				0CF165DA24674243006A5EEA /* CreateAccountViewController.swift in Sources */,
 				0CF165D8246737A9006A5EEA /* chatBubbleCell.swift in Sources */,
 				0CF165D124672FB8006A5EEA /* ChatLogViewController.swift in Sources */,
 				0CD62426244DAC17008C7EF7 /* AppDelegate.swift in Sources */,
 				0C7BA94C246887DF00D9B16E /* ChatBubbleAudioCell.swift in Sources */,
-				0C386100245A14A900DB38AE /* ChatInfo.swift in Sources */,
 				0CF165CB24672FB8006A5EEA /* ContactTableViewCell.swift in Sources */,
 				0CF165C924672FB8006A5EEA /* HomeViewController.swift in Sources */,
 				0CD8A5F2245778C8005FE582 /* Message.swift in Sources */,
@@ -291,6 +289,8 @@
 				0CF165DC246794D7006A5EEA /* ZoomTransitionDelegate.swift in Sources */,
 				0CF165D424672FB8006A5EEA /* PhoneVerificationViewController.swift in Sources */,
 				0CF165CC24672FB8006A5EEA /* chatBubbleFileCell.swift in Sources */,
+				0C5FC7BA246DDF5E004361AD /* CountryTableViewCell.swift in Sources */,
+				0C5FC7BC246DEAE3004361AD /* CountryTableViewController.swift in Sources */,
 				0CF165CD24672FB8006A5EEA /* chatsTableViewCell.swift in Sources */,
 				0CF165D024672FB8006A5EEA /* NewChatViewController.swift in Sources */,
 			);

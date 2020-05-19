@@ -34,7 +34,7 @@ class chatBubbleCell: UICollectionViewCell {
     
     let msgTime: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14)
+        label.font = UIFont.systemFont(ofSize: 13)
         label.textColor = UIColor.white
         label.translatesAutoresizingMaskIntoConstraints = false
         label.backgroundColor = UIColor.clear
@@ -58,10 +58,19 @@ class chatBubbleCell: UICollectionViewCell {
         return imv
     }()
     
+    let readReceipt: UIImageView = {
+        let imv = UIImageView()
+        imv.backgroundColor = UIColor.clear
+        imv.image = UIImage(named: "ReadReceipt")
+        imv.translatesAutoresizingMaskIntoConstraints = false
+        return imv
+    }()
+    
     var bubbleWidthAnchor: NSLayoutConstraint?
     var bubbleHeightAnchor: NSLayoutConstraint?
     var bubbleRightAnchor: NSLayoutConstraint?
     var bubbleLeftAnchor: NSLayoutConstraint?
+    var readReceiptWidth: NSLayoutConstraint?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -69,17 +78,18 @@ class chatBubbleCell: UICollectionViewCell {
         addSubview(bubbleView)
         addSubview(textView)
         addSubview(msgTime)
+        addSubview(readReceipt)
         bubbleView.addSubview(imageView)
         
         
-        imageView.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor).isActive = true
-        imageView.widthAnchor.constraint(equalTo: self.bubbleView.widthAnchor).isActive = true
-        imageView.topAnchor.constraint(equalTo: self.bubbleView.topAnchor).isActive = true
-        imageView.heightAnchor.constraint(equalTo: self.bubbleView.heightAnchor).isActive = true
+        imageView.leftAnchor.constraint(equalTo: bubbleView.leftAnchor).isActive = true
+        imageView.widthAnchor.constraint(equalTo: bubbleView.widthAnchor).isActive = true
+        imageView.topAnchor.constraint(equalTo: bubbleView.topAnchor).isActive = true
+        imageView.heightAnchor.constraint(equalTo: bubbleView.heightAnchor).isActive = true
         
         bubbleView.addSubview(playButton)
-        playButton.centerXAnchor.constraint(equalTo: self.bubbleView.centerXAnchor).isActive = true
-        playButton.centerYAnchor.constraint(equalTo: self.bubbleView.centerYAnchor).isActive = true
+        playButton.centerXAnchor.constraint(equalTo: bubbleView.centerXAnchor).isActive = true
+        playButton.centerYAnchor.constraint(equalTo: bubbleView.centerYAnchor).isActive = true
         playButton.widthAnchor.constraint(equalToConstant: 50).isActive = true
         playButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
         
@@ -98,8 +108,15 @@ class chatBubbleCell: UICollectionViewCell {
         textView.widthAnchor.constraint(equalToConstant: 200).isActive = true
         textView.heightAnchor.constraint(equalTo: self.heightAnchor).isActive = true
         
-        msgTime.rightAnchor.constraint(equalTo: bubbleView.rightAnchor,constant: -5).isActive = true
+        readReceipt.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor,constant: -8).isActive = true
+        readReceipt.rightAnchor.constraint(equalTo: bubbleView.rightAnchor,constant: -5).isActive = true
+        readReceiptWidth = readReceipt.widthAnchor.constraint(equalToConstant: 19)
+        readReceiptWidth!.isActive = true
+        readReceipt.heightAnchor.constraint(equalToConstant: 10).isActive = true
+        
+        msgTime.rightAnchor.constraint(equalTo: readReceipt.leftAnchor,constant: -5).isActive = true
         msgTime.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor,constant: -5).isActive = true
+        
  }
     
     required init?(coder: NSCoder) {

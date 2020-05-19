@@ -23,10 +23,12 @@ class Message: NSObject {
     var fileURL: String?
     var audioURL: String?
     var audioDuration: NSNumber?
+    var isSeen: String?
     
     
     init(dictionary: [String: Any]) {
         super.init()
+        isSeen = dictionary["isSeen"] as? String
         toID = dictionary["toID"] as? String
         fromID = dictionary["fromID"] as? String
         text = dictionary["text"] as? String

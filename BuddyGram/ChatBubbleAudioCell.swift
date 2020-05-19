@@ -10,18 +10,19 @@ import UIKit
 import Firebase
 import AVFoundation
 
+let audioCache = NSCache<NSString, NSString>()
+
 class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
     
     var message: Message!
     let currentUserEmail = Auth.auth().currentUser?.email
     let currentUserPhone = Auth.auth().currentUser?.phoneNumber
     let currentUserUID = Auth.auth().currentUser?.uid
-    var soundPlayer : AVAudioPlayer!
     var player: AVPlayer?
     
     let msgTime: UILabel = {
            let label = UILabel()
-           label.font = UIFont.systemFont(ofSize: 14)
+           label.font = UIFont.systemFont(ofSize: 13)
            label.textColor = UIColor.white
            label.text = "01:19"
            label.translatesAutoresizingMaskIntoConstraints = false
@@ -32,7 +33,7 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
        let timerLabel: UILabel = {
            let label = UILabel()
            label.text = "01:19"
-           label.font = UIFont.systemFont(ofSize: 13)
+           label.font = UIFont.systemFont(ofSize: 12)
            label.textColor = UIColor.darkGray
            label.translatesAutoresizingMaskIntoConstraints = false
            label.backgroundColor = UIColor.clear
@@ -54,10 +55,9 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
        
         if playPauseButton.image(for: .normal) == UIImage(named: "Play") {
             playPauseButton.setImage(UIImage(named: "Pause"), for: .normal)
-            
-            
+            playPauseButton.isHidden = true
+            indicator.startAnimating()
             setupPlayer()
-            player!.play()
         } else {
             player!.pause()
             playPauseButton.setImage(UIImage(named: "Play"), for: .normal)
@@ -65,10 +65,17 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         }
     }
     
-//    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
-//        soundPlayer.stop()
-//        playPauseButton.setImage(UIImage(named: "Play"), for: .normal)
-//    }
+override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    if object as AnyObject? === player {
+        if keyPath == "status" {
+            if player!.status == .readyToPlay {
+                playPauseButton.isHidden = false
+                indicator.stopAnimating()
+                player!.play()
+            }
+        }
+    }
+}
     
     func setupPlayer() {
         var urlPath: URL?
@@ -85,6 +92,7 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         
         let playerItem = AVPlayerItem( url: urlPath!)
         player = AVPlayer(playerItem:playerItem)
+        player!.addObserver(self, forKeyPath: "status", options: [.old, .new], context: nil)
         player!.rate = 1.0
         player?.addPeriodicTimeObserver(forInterval: CMTime.init(value: 1, timescale: 1), queue: .main, using: { (time) in
             var timeNow = Int(time.value) / Int(time.timescale)
@@ -105,15 +113,6 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         
         NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying(note:)),
                name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player!.currentItem)
-        
-//        do{
-//            self.soundPlayer = try AVAudioPlayer(contentsOf: urlPath!)
-//            self.soundPlayer.delegate = self
-//            self.soundPlayer.prepareToPlay()
-//            self.soundPlayer.volume = 1.0
-//        } catch {
-//            print("error",error)
-//        }
            
     }
     
@@ -148,10 +147,28 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         return s
     }()
     
+    let readReceipt: UIImageView = {
+        let imv = UIImageView()
+        imv.backgroundColor = UIColor.clear
+        imv.image = UIImage(named: "ReadReceipt")
+        imv.translatesAutoresizingMaskIntoConstraints = false
+        return imv
+    }()
+    
+    let indicator: UIActivityIndicatorView = {
+        let ind = UIActivityIndicatorView()
+        ind.translatesAutoresizingMaskIntoConstraints = false
+        ind.hidesWhenStopped = true
+        return ind
+    }()
+    
+    
     var bubbleWidthAnchor: NSLayoutConstraint?
     var bubbleHeightAnchor: NSLayoutConstraint?
     var bubbleRightAnchor: NSLayoutConstraint?
     var bubbleLeftAnchor: NSLayoutConstraint?
+    var readReceiptWidth: NSLayoutConstraint?
+    
        
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -159,14 +176,21 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         addSubview(bubbleView)
         addSubview(timerLabel)
         addSubview(msgTime)
+        addSubview(readReceipt)
         addSubview(timerLabel)
-        bubbleView.addSubview(playPauseButton)
+        
            
         bubbleView.addSubview(playPauseButton)
         playPauseButton.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor, constant: 15).isActive = true
         playPauseButton.topAnchor.constraint(equalTo: self.bubbleView.topAnchor, constant: 7).isActive = true
         playPauseButton.widthAnchor.constraint(equalToConstant: 20).isActive = true
         playPauseButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
+        
+        bubbleView.addSubview(indicator)
+        indicator.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor, constant: 15).isActive = true
+        indicator.topAnchor.constraint(equalTo: self.bubbleView.topAnchor, constant: 7).isActive = true
+        indicator.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        indicator.heightAnchor.constraint(equalToConstant: 20).isActive = true
            
         bubbleView.addSubview(slider)
         slider.leftAnchor.constraint(equalTo: self.playPauseButton.rightAnchor, constant: 10).isActive = true
@@ -188,8 +212,15 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
         timerLabel.centerXAnchor.constraint(equalTo: self.playPauseButton.centerXAnchor).isActive = true
         timerLabel.bottomAnchor.constraint(equalTo: self.bubbleView.bottomAnchor, constant: -5).isActive = true
            
-        msgTime.rightAnchor.constraint(equalTo: bubbleView.rightAnchor,constant: -5).isActive = true
-        msgTime.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor,constant: -5).isActive = true
+       readReceipt.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor,constant: -8).isActive = true
+       readReceipt.rightAnchor.constraint(equalTo: bubbleView.rightAnchor,constant: -5).isActive = true
+       readReceiptWidth = readReceipt.widthAnchor.constraint(equalToConstant: 19)
+        readReceiptWidth?.isActive = true
+       readReceipt.heightAnchor.constraint(equalToConstant: 10).isActive = true
+       
+       msgTime.rightAnchor.constraint(equalTo: readReceipt.leftAnchor,constant: -5).isActive = true
+       msgTime.bottomAnchor.constraint(equalTo: bubbleView.bottomAnchor,constant: -5).isActive = true
+        
     }
        
     required init?(coder: NSCoder) {
@@ -197,31 +228,3 @@ class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
     }
    
 }
-
-//extension ChatBubbleAudioCell {
-//    func loadAudioUsingStorageWithUrlString(_ urlString: String) {
-//
-//        //otherwise fire off a new download
-//        let url = URL(string: urlString)
-//        URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
-//
-//            //download hit an error so lets return out
-//            if error != nil {
-//                print(error ?? "")
-//                return
-//            }
-//
-//            DispatchQueue.main.async(execute: {
-//
-//                let localURL = URL(string: self.message.fileName!)
-//                do{
-//                    try data?.write(to: localURL!)
-//                }
-//                catch {
-//                    print(error)
-//                }
-//            })
-//
-//        }).resume()
-//    }
-//}

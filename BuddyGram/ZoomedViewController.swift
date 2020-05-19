@@ -22,14 +22,3 @@ class ZoomedViewController: UIViewController {
     }
 
 }
-
-//extension ZoomedViewController: ZoomingViewController{
-//    func zoomingImageView(forTransition: ZoomTransitionDelegate) -> UIImageView? {
-//        return detailImageView
-//    }
-//    
-//    func zoomingBackgroundView(forTransition: ZoomTransitionDelegate) -> UIView? {
-//        return nil
-//    }
-//    
-//}

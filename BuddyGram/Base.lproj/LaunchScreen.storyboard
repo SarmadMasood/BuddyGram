@@ -19,8 +19,8 @@
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="purple back ground 2" translatesAutoresizingMaskIntoConstraints="NO" id="pBo-2y-quG">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                             </imageView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="BuddyGram logo" translatesAutoresizingMaskIntoConstraints="NO" id="x2c-Ww-5aW">
-                                <rect key="frame" x="72" y="219" width="270" height="178"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Logo1" translatesAutoresizingMaskIntoConstraints="NO" id="x2c-Ww-5aW">
+                                <rect key="frame" x="72" y="194" width="270" height="178"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="178" id="U6C-Ef-bhw"/>
                                     <constraint firstAttribute="width" constant="270" id="bf0-fA-bNp"/>
@@ -31,7 +31,7 @@
                         <constraints>
                             <constraint firstItem="pBo-2y-quG" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="6h4-dX-sBw"/>
                             <constraint firstItem="pBo-2y-quG" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Hlp-ml-wQE"/>
-                            <constraint firstItem="x2c-Ww-5aW" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="175" id="WkX-Nd-eub"/>
+                            <constraint firstItem="x2c-Ww-5aW" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="150" id="WkX-Nd-eub"/>
                             <constraint firstItem="pBo-2y-quG" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="hdL-bz-Anw"/>
                             <constraint firstItem="pBo-2y-quG" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="topMargin" constant="-44" id="qad-I2-myg"/>
                             <constraint firstItem="x2c-Ww-5aW" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="w2H-ei-866"/>
@@ -45,7 +45,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="BuddyGram logo" width="1024" height="1024"/>
+        <image name="Logo1" width="1181" height="1181"/>
         <image name="purple back ground 2" width="487" height="918"/>
     </resources>
 </document>

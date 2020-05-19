@@ -43,6 +43,7 @@ class NewChatViewController: UIViewController ,UITableViewDataSource,UITableView
     }
     
     func fetchContacts()  {
+        
         let store = CNContactStore()
         store.requestAccess(for: .contacts) { (granted, error) in
             if let err = error{
@@ -128,18 +129,5 @@ class NewChatViewController: UIViewController ,UITableViewDataSource,UITableView
             self.chatsVC?.showChatLogForUser(contact: self.filteredContacts[indexPath.row])
         })
     }
-    
-    
-
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }
