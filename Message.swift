@@ -12,25 +12,28 @@ import Firebase
 class Message: NSObject {
     var toID: String?
     var fromID: String?
+    var toUUID: String?
+    var fromUUID: String?
     var text: String?
-    var timeStamp: NSNumber?
     var imageURL: String?
-    var imageWidth: NSNumber?
-    var imageHeight: NSNumber?
     var videoURL: String?
     var fileName: String?
     var fileExt: String?
     var fileURL: String?
     var audioURL: String?
-    var audioDuration: NSNumber?
     var isSeen: String?
-    
+    var audioDuration: NSNumber?
+    var timeStamp: NSNumber?
+    var imageWidth: NSNumber?
+    var imageHeight: NSNumber?
     
     init(dictionary: [String: Any]) {
         super.init()
         isSeen = dictionary["isSeen"] as? String
         toID = dictionary["toID"] as? String
         fromID = dictionary["fromID"] as? String
+        toUUID = dictionary["toUUID"] as? String
+        fromUUID = dictionary["fromUUID"] as? String
         text = dictionary["text"] as? String
         timeStamp = dictionary["timeStamp"] as? NSNumber
         imageURL = dictionary["imageURL"] as? String
@@ -63,6 +66,22 @@ class Message: NSObject {
                        chatPartnerID = fromID
                    }
                }
+        return chatPartnerID!
+    }
+    
+    
+    func getChatPartnerUUID() -> String {
+        let uid = Auth.auth().currentUser?.uid
+        
+        var chatPartnerID:  String?
+        
+        if fromUUID == uid {
+            chatPartnerID = toUUID
+        }
+        else{
+            chatPartnerID = fromUUID
+        }
+               
         return chatPartnerID!
     }
     

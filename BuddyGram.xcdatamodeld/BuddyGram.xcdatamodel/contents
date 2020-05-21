@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="15702" systemVersion="19C57" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Message" representedClassName="Message" syncable="YES" codeGenerationType="class">
+        <attribute name="audioDuration" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="audioURL" optional="YES" attributeType="String"/>
+        <attribute name="fileExt" optional="YES" attributeType="String"/>
+        <attribute name="fileName" optional="YES" attributeType="String"/>
+        <attribute name="fileURL" optional="YES" attributeType="String"/>
+        <attribute name="fromID" optional="YES" attributeType="String"/>
+        <attribute name="fromUUID" optional="YES" attributeType="String"/>
+        <attribute name="imageHeight" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="imageURL" optional="YES" attributeType="String"/>
+        <attribute name="imageWidth" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="isSeen" optional="YES" attributeType="String"/>
+        <attribute name="text" optional="YES" attributeType="String"/>
+        <attribute name="timeStamp" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="toID" optional="YES" attributeType="String"/>
+        <attribute name="toUUID" optional="YES" attributeType="String"/>
+        <attribute name="videoURL" optional="YES" attributeType="String"/>
+    </entity>
+    <elements>
+        <element name="Message" positionX="-54" positionY="-9" width="128" height="283"/>
+    </elements>
+</model>

@@ -46,7 +46,7 @@ class CountryTableViewController: UIViewController, UITableViewDelegate, UITable
         
         for code in NSLocale.isoCountryCodes  {
             let name = (Locale.current as NSLocale).displayName(forKey: .countryCode, value: code) ?? "Country not found for code: \(code)"
-            print("\(name): ",countryDictionary[code])
+          //  print("\(name): ",countryDictionary[code])
             if let dialCode = countryDictionary[code] {
                 var c = cell(country: name, isoCode: code, dialCode: "+"+dialCode)
                 cells.append(c)

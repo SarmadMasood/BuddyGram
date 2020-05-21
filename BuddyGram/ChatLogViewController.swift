@@ -24,7 +24,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     @IBOutlet weak var attachButton: UIButton!
     var selectedIndexPath: IndexPath!
     var soundRecorder : AVAudioRecorder!
-   // var audioFilePath: URL?
+    var latestTimeStamp: NSNumber?
     
     var messages = [Message]()
     let currentUserEmail = Auth.auth().currentUser?.email
@@ -146,7 +146,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         ref.putFile(from: url!, metadata: nil) { (metadata, err) in
             ref.downloadURL { (downloadURL, error) in
 
-                let values = ["isSeen": "false","ext": ext,"fileURL": downloadURL?.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
+                let values = ["isSeen": "false","ext": ext,"fileURL": downloadURL?.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
                 self.uploadMsgWithValues(values: values)
             }
         }
@@ -235,7 +235,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                     let asset = AVURLAsset(url: localURL)
                     let duration = asset.duration.seconds;
                     
-                    let values = ["isSeen": "false","filename": path,"text": "Audio","audioURL": downloadURL?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration] as [String : Any]
+                    let values = ["isSeen": "false","filename": path,"text": "Audio","audioURL": downloadURL?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
                     self.uploadMsgWithValues(values: values)
                 })
         })
@@ -256,7 +256,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             fromID = self.currentUserPhone
         }
         let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["isSeen": "false","text": "Photo","imageURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height] as [String : Any]
+        let values = ["isSeen": "false","text": "Photo","imageURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
         self.uploadMsgWithValues(values: values)
     }
     
@@ -297,7 +297,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         if let uploadData = image.jpegData(compressionQuality: 0.2) {
             ref.putData(uploadData, metadata: nil) { (metaData, error) in
                 ref.downloadURL { (imageURL, err) in
-                    let values = ["isSeen": "false","text": "Video","videoURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image.size.height,"imageWidth": image.size.width,"imageURL": imageURL?.absoluteString] as [String : Any]
+                    let values = ["isSeen": "false","text": "Video","videoURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image.size.height,"imageWidth": image.size.width,"imageURL": imageURL?.absoluteString, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
                     self.uploadMsgWithValues(values: values)
                 }
             }
@@ -648,7 +648,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     override func viewDidLoad() {
         super.viewDidLoad()
         observeUserMessages()
-
+        deleteSeenMessagesFromServer()
         
         collectionView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         collectionView.register(chatBubbleCell.self, forCellWithReuseIdentifier: "chatBubble")
@@ -682,6 +682,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         indicator.isHidden = true
         indicator.style = UIActivityIndicatorView.Style.whiteLarge
         indicator.color = UIColor.darkGray
+        
         // Do any additional setup after loading the view.
     }
     
@@ -707,11 +708,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         setupKeyboardObservers()
     }
         
-    override func viewDidDisappear(_ animated: Bool) {
-            super.viewDidDisappear(animated)
-            
-            NotificationCenter.default.removeObserver(self)
-    }
+    
     
     
     @objc func handleKeyboardWillShow(_ notification: Notification) {
@@ -763,24 +760,24 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             fromID = phone
         }
         let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["isSeen": "false","text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp] as [String : Any]
+        let values = ["isSeen": "false","text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
         uploadMsgWithValues(values: values)
         self.msgInputField.text = "UPLOADING MESSAGE..."
        
         return true
     }
     
-    func uploadMsgWithValues(values: [String: Any]){
-        let ref =  Database.database().reference().child("messages")
-               let childRef = ref.childByAutoId()
-        childRef.updateChildValues(values)
-        let uid = Auth.auth().currentUser?.uid
-        let senderRef = Database.database().reference().child("userMessages").child(uid!)
-        senderRef.updateChildValues([childRef.key as! String: ""])
-        
-        let rID = self.contact?.id
-        let recipientRef = Database.database().reference().child("userMessages").child(rID!)
-        recipientRef.updateChildValues([childRef.key as! String: ""])
+     func uploadMsgWithValues(values: [String: Any]){
+           let ref =  Database.database().reference().child("messages")
+                  let childRef = ref.childByAutoId()
+           childRef.updateChildValues(values)
+           
+           let senderRef = Database.database().reference().child("userMessages").child(self.currentUserUID!).child((self.contact?.id)!)
+           senderRef.updateChildValues([childRef.key as! String: ""])
+           
+           let rID = self.contact?.id
+           let recipientRef = Database.database().reference().child("userMessages").child((self.contact?.id)!).child(self.currentUserUID!)
+           recipientRef.updateChildValues([childRef.key as! String: ""])
     }
     
     @objc func updateTimer(){
@@ -818,21 +815,77 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         }
     }
     
+    override func viewDidDisappear(_ animated: Bool) {
+            super.viewDidDisappear(animated)
+            
+            NotificationCenter.default.removeObserver(self)
+         let seenRef = Database.database().reference().child("seenMessages").child(currentUserUID!).child((contact?.id)!)
+        seenRef.removeAllObservers()
+        let ref = Database.database().reference().child("userMessages").child(currentUserUID!).child((contact?.id)!)
+        ref.removeAllObservers()
+    }
+    
+    func deleteSeenMessagesFromServer(){
+        
+        let seenRef = Database.database().reference().child("seenMessages").child(currentUserUID!).child((contact?.id)!)
+        seenRef.observe(.childAdded) { (snapshot) in
+            print("insideDelete")
+            let msgID = snapshot.key
+            let msgRef = Database.database().reference().child("messages").child(msgID)
+            msgRef.observeSingleEvent(of: .value) { (snap) in
+                if let dictionary = snap.value as? [String: AnyObject] {
+                    if (self.currentUserUID!.isEqual(dictionary["fromUUID"] as! String )) {
+                        print("messageCount: ",self.messages.count)
+                        var i = (self.messages.count-1)
+                        var found = false
+                        while !found {
+                            if (self.messages[i].timeStamp?.isEqual(to: dictionary["timeStamp"] as! NSNumber ))! && self.messages[i].fromUUID == self.currentUserUID {
+                                print("Found")
+                                if self.messages[i].isSeen == "false" {
+                                    print("not seen")
+                                    self.messages[i].isSeen = "true"
+                                    self.collectionView.reloadData()
+                                }
+
+                                found = true
+                                msgRef.removeValue { (error, dbref) in
+
+                                let senderRef = Database.database().reference().child("userMessages").child(self.currentUserUID!).child((self.contact?.id)!)
+                                senderRef.child(snapshot.key).removeValue()
+
+                                let recipientRef = Database.database().reference().child("userMessages").child((self.contact?.id)!).child(self.currentUserUID!)
+                                recipientRef.child(snapshot.key).removeValue()
+                                snapshot.ref.removeValue()
+                                           }
+                            }
+                            i -= 1
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+    
     func observeUserMessages(){
-        guard let uid = Auth.auth().currentUser?.uid else {
+        guard let uid = Auth.auth().currentUser?.uid , let cID = contact?.id else {
             return
         }
-        let ref = Database.database().reference().child("userMessages").child(uid)
+        let ref = Database.database().reference().child("userMessages").child(uid).child(cID)
+      
         ref.observe(.childAdded) { (snapshot) in
             let msgID = snapshot.key
             let msgRef = Database.database().reference().child("messages").child(msgID)
             msgRef.observeSingleEvent(of: .value) { (snap) in
                  if let dictionary = snap.value as? [String: AnyObject] {
+                //    print(snap)
                              var  temp = dictionary
                     let message = Message(dictionary: dictionary)
                     if (message.toID == self.currentUserEmail || message.toID == self.currentUserPhone) && message.isSeen == "false"{
                         temp["isSeen"] = "true" as AnyObject
                         msgRef.updateChildValues(temp)
+                        let seenRef = Database.database().reference().child("seenMessages").child(cID).child(uid)
+                        seenRef.updateChildValues([msgRef.key as! String: ""])
                     }
                    
                     if(message.getChatPartnerID().isEqual(self.contact?.email) || message.getChatPartnerID().isEqual(self.contact?.phone)){

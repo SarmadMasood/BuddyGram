@@ -78,17 +78,14 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
         
         
         indicator.hidesWhenStopped = true
-        loadingView.layer.cornerRadius = 10
-        loadingView.clipsToBounds = true
+       // loadingView.layer.cornerRadius = 10
+       // loadingView.clipsToBounds = true
         
-        if tableView.visibleCells.isEmpty {
-            loadingView.isHidden = false
-            loadingLabel.isHidden = false
-            indicator.startAnimating()
-        }else{
-            loadingView.isHidden = true
-            loadingLabel.isHidden = true
-        }
+       
+       
+        loadingView.isHidden = true
+        loadingLabel.isHidden = true
+        
         
         observeUserMessages()
         fetchContacts()
@@ -126,34 +123,29 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
         }
         let ref = Database.database().reference().child("userMessages").child(uid)
         ref.observe(.childAdded) { (snapshot) in
-            if snapshot.exists() {
-                let msgID = snapshot.key
-                let msgRef = Database.database().reference().child("messages").child(msgID)
-                msgRef.observeSingleEvent(of: .value) { (snap) in
-                     if let dictionary = snap.value as? [String: AnyObject] {
-                                       //print(snapshot)
-                    let message = Message(dictionary: dictionary)
-                        let partnerID = message.getChatPartnerID()
-                                        
-                        self.messagesDictionary[partnerID] = message
-                        self.messages = Array(self.messagesDictionary.values)
-                        self.messages.sort (by: { (msg1, msg2) -> Bool in
+            let contactID = snapshot.key
+            Database.database().reference().child("userMessages").child(uid).child(contactID).observe(.childAdded) { (snap) in
+                if snap.exists() {
+                    
+                    let msgID = snap.key
+                    let msgRef = Database.database().reference().child("messages").child(msgID)
+                    msgRef.observeSingleEvent(of: .value) { (snapdoodle) in
+                         if let dictionary = snapdoodle.value as? [String: AnyObject] {
+                       
+                        let message = Message(dictionary: dictionary)
+                            let partnerID = message.getChatPartnerID()
                                             
-                            return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
-                        })
-                        DispatchQueue.main.async {self.tableView.reloadData()
-                            self.indicator.stopAnimating()
-                            self.loadingView.isHidden = true
-                            self.loadingLabel.isHidden = true
+                            self.messagesDictionary[partnerID] = message
+                            self.messages = Array(self.messagesDictionary.values)
+                            self.messages.sort (by: { (msg1, msg2) -> Bool in
+                                                
+                                return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
+                            })
                         }
+                        self.tableView.reloadData()
                     }
                 }
             }
-        }
-        DispatchQueue.main.async {self.tableView.reloadData()
-            self.indicator.stopAnimating()
-            self.loadingView.isHidden = true
-            self.loadingLabel.isHidden = true
         }
     }
     
@@ -168,46 +160,45 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
                     print("Access Granted to contacts.")
                     let keys = [CNContactGivenNameKey,CNContactFamilyNameKey,CNContactEmailAddressesKey,CNContactPhoneNumbersKey]
                     let request = CNContactFetchRequest(keysToFetch: keys as [CNKeyDescriptor])
-                    
-                    
+
+
                     do {
                         try store.enumerateContacts(with: request, usingBlock: { (contact, stopNumeratingPointer) in
                             var c = Contact()
                             c.name = contact.givenName
                             c.name?.append(" ")
                             c.name?.append(contact.familyName)
-                            
+
                             c.phone = contact.phoneNumbers.first?.value.stringValue ?? ""
                             let phone = String(c.phone!.filter { !" \n\t\r".contains($0) })
                             c.phone = phone
-                            
+
                             c.email = contact.emailAddresses.first?.value ?? ""
                             self.contacts.append(c)
                             })
-                        
+
                     } catch let err {
                         print(err)
                     }
-                
+
             }
         }
-            
+
     }
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let chatPartnerUUID = messages[indexPath.row].getChatPartnerUUID()
         let chatPartnerID = messages[indexPath.row].getChatPartnerID()
         var user = Contact()
-        let ref = Database.database().reference().child("users").observe(.childAdded) { (snapshot) in
+        user.id = chatPartnerUUID
+        let ref = Database.database().reference().child("users").child(chatPartnerUUID)
+        ref.observeSingleEvent(of: .value) { (snapshot) in
             if let dictionary = snapshot.value as? [String: AnyObject] {
-                let login = dictionary["login"] as! String
-                if login.isEqual(chatPartnerID){
-                    user.id = snapshot.key
-                    user.name = dictionary["name"] as! String
-                    user.email = dictionary["login"] as! NSString
-                    user.phone = dictionary["login"] as! String
-                }
+                user.name = dictionary["name"] as! String
+                user.email = dictionary["login"] as! NSString
+                user.phone = dictionary["login"] as! String
             }
         }
         

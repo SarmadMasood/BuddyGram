@@ -10,6 +10,8 @@
 		0C5FC7BA246DDF5E004361AD /* CountryTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */; };
 		0C5FC7BC246DEAE3004361AD /* CountryTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */; };
 		0C7BA94C246887DF00D9B16E /* ChatBubbleAudioCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */; };
+		0C7E40892476F9BC00FAFD59 /* BuddyGram.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E40872476F9BC00FAFD59 /* BuddyGram.xcdatamodeld */; };
+		0C7E408B2476FC2000FAFD59 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C7E408A2476FC2000FAFD59 /* CoreDataManager.swift */; };
 		0CD62426244DAC17008C7EF7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD62425244DAC17008C7EF7 /* AppDelegate.swift */; };
 		0CD6242A244DAC17008C7EF7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CD62429244DAC17008C7EF7 /* ViewController.swift */; };
 		0CD6242D244DAC17008C7EF7 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0CD6242B244DAC17008C7EF7 /* Main.storyboard */; };
@@ -39,6 +41,8 @@
 		0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryTableViewCell.swift; sourceTree = "<group>"; };
 		0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountryTableViewController.swift; sourceTree = "<group>"; };
 		0C7BA94B246887DF00D9B16E /* ChatBubbleAudioCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBubbleAudioCell.swift; sourceTree = "<group>"; };
+		0C7E40882476F9BC00FAFD59 /* BuddyGram.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = BuddyGram.xcdatamodel; sourceTree = "<group>"; };
+		0C7E408A2476FC2000FAFD59 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		0CD62422244DAC17008C7EF7 /* BuddyGram.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BuddyGram.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0CD62425244DAC17008C7EF7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0CD62429244DAC17008C7EF7 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -83,6 +87,7 @@
 		0CD62419244DAC17008C7EF7 = {
 			isa = PBXGroup;
 			children = (
+				0C7E40872476F9BC00FAFD59 /* BuddyGram.xcdatamodeld */,
 				0CFD527F2451F03B00BC5A46 /* Models */,
 				0CD62424244DAC17008C7EF7 /* BuddyGram */,
 				0CD62423244DAC17008C7EF7 /* Products */,
@@ -126,6 +131,7 @@
 				0CF165DD2467964C006A5EEA /* ZoomedViewController.swift */,
 				0C5FC7BB246DEAE3004361AD /* CountryTableViewController.swift */,
 				0C5FC7B9246DDF5E004361AD /* CountryTableViewCell.swift */,
+				0C7E408A2476FC2000FAFD59 /* CoreDataManager.swift */,
 			);
 			path = BuddyGram;
 			sourceTree = "<group>";
@@ -280,9 +286,11 @@
 				0CF165DA24674243006A5EEA /* CreateAccountViewController.swift in Sources */,
 				0CF165D8246737A9006A5EEA /* chatBubbleCell.swift in Sources */,
 				0CF165D124672FB8006A5EEA /* ChatLogViewController.swift in Sources */,
+				0C7E408B2476FC2000FAFD59 /* CoreDataManager.swift in Sources */,
 				0CD62426244DAC17008C7EF7 /* AppDelegate.swift in Sources */,
 				0C7BA94C246887DF00D9B16E /* ChatBubbleAudioCell.swift in Sources */,
 				0CF165CB24672FB8006A5EEA /* ContactTableViewCell.swift in Sources */,
+				0C7E40892476F9BC00FAFD59 /* BuddyGram.xcdatamodeld in Sources */,
 				0CF165C924672FB8006A5EEA /* HomeViewController.swift in Sources */,
 				0CD8A5F2245778C8005FE582 /* Message.swift in Sources */,
 				0CF165DE2467964C006A5EEA /* ZoomedViewController.swift in Sources */,
@@ -494,6 +502,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		0C7E40872476F9BC00FAFD59 /* BuddyGram.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				0C7E40882476F9BC00FAFD59 /* BuddyGram.xcdatamodel */,
+			);
+			currentVersion = 0C7E40882476F9BC00FAFD59 /* BuddyGram.xcdatamodel */;
+			path = BuddyGram.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 0CD6241A244DAC17008C7EF7 /* Project object */;
 }
