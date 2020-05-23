@@ -79,7 +79,7 @@ override func observeValue(forKeyPath keyPath: String?, of object: Any?, change:
     
     func setupPlayer() {
         var urlPath: URL?
-        if message.fromID == currentUserEmail || message.fromID == currentUserPhone {
+        if message.fromUUID == currentUserUID {
             if let file = message.fileName {
                 urlPath = URL(string: file)
             }

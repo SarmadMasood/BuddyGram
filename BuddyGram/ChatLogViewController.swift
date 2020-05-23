@@ -42,28 +42,22 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             return
         }
         
-        self.selectedIndexPath = indexPath
-        
         let message = messages[indexPath.item]
+       
         if let fileURL = message.fileURL {
             indicator.startAnimating()
             indicator.isHidden = false
             let url = URL(string: fileURL)
-            URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
-                       
-                DispatchQueue.main.async(execute: {
-                   self.savetoDocumentsFolder(data: data!, message: message)
+           
+            let docC = UIDocumentInteractionController(url: url!)
+            docC.delegate = self
+            docC.presentPreview(animated: true)
+            self.indicator.isHidden = true
+            self.indicator.stopAnimating()
             
-                    let file = self.getDocumentsDirectory()?.appendingPathComponent(message.fileName!).appendingPathExtension(message.fileExt!)
-                   let docC = UIDocumentInteractionController(url: file!)
-                   docC.delegate = self
-                    self.indicator.isHidden = true
-                    self.indicator.stopAnimating()
-                   docC.presentPreview(animated: true)
-                    })
-                }).resume()
             return
         }
+        
         if message.videoURL == nil {
             if message.imageURL != nil  {
                 let vc = storyboard?.instantiateViewController(withIdentifier: "imageDetail") as! ZoomedViewController
@@ -122,7 +116,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     let docPicker = UIDocumentPickerViewController(documentTypes: [String(kUTTypeItem)], in: .import)
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        self.msgInputField.text = "UPLOADING MESSAGE..."
+      //  self.msgInputField.text = "UPLOADING MESSAGE..."
         let filename = urls.first!.lastPathComponent
         let ext = urls.first!.pathExtension
         let url = urls.first
@@ -142,11 +136,26 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         }
         let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
         
+        var values = ["isSeen": "false","ext": ext,"fileURL": url!.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+        
+        if #available(iOS 10.0, *) {
+            coreDataManager.shared.createMessage(dictionary: values)
+            let temp = coreDataManager.shared.fetchSortedMessages()
+            self.messages = temp.filter({( message : Message) -> Bool in
+                return message.toUUID==contact?.id || message.fromUUID == contact?.id
+            })
+            self.collectionView.reloadData()
+            if self.messages.count > 0 {
+                let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+            }
+        } else {}
+        
         let ref = Storage.storage().reference().child("files").child(filename)
         ref.putFile(from: url!, metadata: nil) { (metadata, err) in
             ref.downloadURL { (downloadURL, error) in
 
-                let values = ["isSeen": "false","ext": ext,"fileURL": downloadURL?.absoluteString,"filename": filename,"text": "File","toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+                values["fileURL"] = downloadURL?.absoluteString
                 self.uploadMsgWithValues(values: values)
             }
         }
@@ -155,7 +164,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     let imagePickerController = UIImagePickerController()
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        self.msgInputField.text = "UPLOADING MESSAGE..."
+      //  self.msgInputField.text = "UPLOADING MESSAGE..."
         let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         
         if let videoURL = (info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.mediaURL)]) as? URL{
@@ -174,10 +183,47 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     
     func uploadImageToFirebase(image: UIImage){
         let imageName = UUID().uuidString
+        var toID: String?
+        if self.contact?.phone != "" {
+            toID = self.contact?.phone as String?
+        }else{
+            toID = self.contact?.email as String?
+        }
+        
+        var fromID:  String?
+        if self.currentUserEmail != nil {
+            fromID = self.currentUserEmail
+        }else {
+            fromID = self.currentUserPhone
+        }
+        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
+        
+        let url = getDocumentsDirectory()?.appendingPathComponent(imageName).appendingPathExtension("jpeg")
+        var uploadData = image.jpegData(compressionQuality: 0.2)
+        do {
+            try uploadData?.write(to: url!)
+        } catch let error {
+            print(error)
+        }
+        var values = ["isSeen": "false","text": "Photo","imageURL": url?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+        
+        if #available(iOS 10.0, *) {
+            coreDataManager.shared.createMessage(dictionary: values)
+            let temp = coreDataManager.shared.fetchSortedMessages()
+            self.messages = temp.filter({( message : Message) -> Bool in
+                return message.toUUID==contact?.id || message.fromUUID == contact?.id
+            })
+            self.collectionView.reloadData()
+            if self.messages.count > 0 {
+                let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+            }
+        } else {}
+        
         let ref = Storage.storage().reference().child("messageImages").child(imageName)
         
-        if let uploadData = image.jpegData(compressionQuality: 0.2) {
-            ref.putData(uploadData, metadata: nil, completion: { (metadata, error) in
+        if uploadData != nil {
+            ref.putData(uploadData!, metadata: nil, completion: { (metadata, error) in
                 
                 if error != nil {
                     print("Failed to upload image:", error!)
@@ -189,123 +235,79 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
                         print(err)
                         return
                     }
-                    
-                    self.sendImageMsgWithUrl(url: downloadURL?.absoluteString ?? "", image: image)
+                    values["imageURL"] = downloadURL?.absoluteString
+                    self.uploadMsgWithValues(values: values)
                 })
                 
             })
         }
     }
     
-    func sendAudioMsgWithUrl(localURL: URL){
-        var toID: String?
-        if self.contact?.phone != "" {
-            toID = self.contact?.phone as String?
-        }else{
-            toID = self.contact?.email as String?
-        }
-        
-        var fromID:  String?
-        if self.currentUserEmail != nil {
-            fromID = self.currentUserEmail
-        }else {
-            fromID = self.currentUserPhone
-        }
-        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        
-        
-        let ref = Storage.storage().reference().child("messageAudios").child(localURL.lastPathComponent)
-        print("uploading audio")
-        ref.putFile(from: localURL, metadata: nil, completion: { (metadata, error) in
-                
-                if error != nil {
-                    print("Failed to upload image:", error!)
-                    return
-                }
-                
-                ref.downloadURL(completion: { (downloadURL, err) in
-                    if let err = err {
-                        print(err)
-                        return
-                    }
-                    
-                    var path = localURL.absoluteString
-                    //path.removeLast()
-                    
-                    let asset = AVURLAsset(url: localURL)
-                    let duration = asset.duration.seconds;
-                    
-                    let values = ["isSeen": "false","filename": path,"text": "Audio","audioURL": downloadURL?.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
-                    self.uploadMsgWithValues(values: values)
-                })
-        })
-    }
-    
-    func sendImageMsgWithUrl(url: String, image: UIImage){
-        var toID: String?
-        if self.contact?.phone != "" {
-            toID = self.contact?.phone as String?
-        }else{
-            toID = self.contact?.email as String?
-        }
-        
-        var fromID:  String?
-        if self.currentUserEmail != nil {
-            fromID = self.currentUserEmail
-        }else {
-            fromID = self.currentUserPhone
-        }
-        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["isSeen": "false","text": "Photo","imageURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageWidth": image.size.width,"imageHeight": image.size.height, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
-        self.uploadMsgWithValues(values: values)
-    }
-    
     func uploadVideoToFirebase(videoURL: URL){
-        let filename = NSUUID().uuidString + ".mov"
-                   
-                   let ref = Storage.storage().reference().child("messageVideos").child(filename)
-                      let upload =  ref.putFile(from: videoURL, metadata: nil) { (metadata, err) in
-                       ref.downloadURL { (downloadURL, err) in
-                        let image = self.thumbnailForVideo(videoURL: videoURL)
-                        self.putVideoMsgWithUrl(url: downloadURL!.absoluteString, image: image!)
-                       }
-                   }
-                   upload.observe(.progress) { (Snapshot) in
-                       print(Snapshot.progress?.completedUnitCount)
-                   }
-    }
-    
-    func putVideoMsgWithUrl(url: String,image: UIImage){
-        
         var toID: String?
-        if self.contact?.phone != "" {
-            toID = self.contact?.phone as String?
-        }else{
-            toID = self.contact?.email as String?
+               if self.contact?.phone != "" {
+                   toID = self.contact?.phone as String?
+               }else{
+                   toID = self.contact?.email as String?
+               }
+               
+               var fromID:  String?
+               if self.currentUserEmail != nil {
+                   fromID = self.currentUserEmail
+               }else {
+                   fromID = self.currentUserPhone
+               }
+               let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
+               let imageName = NSUUID().uuidString
+            let image = self.thumbnailForVideo(videoURL: videoURL)
+        let imageURL = getDocumentsDirectory()?.appendingPathComponent(imageName).appendingPathExtension("jpeg")
+        var uploadData = image!.jpegData(compressionQuality: 0.2)
+        do {
+            try uploadData?.write(to: imageURL!)
+        } catch let error {
+            print(error)
+        }
+        var values = ["isSeen": "false","text": "Video","videoURL": videoURL.absoluteString, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image!.size.height,"imageWidth": image!.size.width,"imageURL": imageURL?.absoluteString, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+        
+        if #available(iOS 10.0, *) {
+            coreDataManager.shared.createMessage(dictionary: values)
+            let temp = coreDataManager.shared.fetchSortedMessages()
+            self.messages = temp.filter({( message : Message) -> Bool in
+                return message.toUUID==contact?.id || message.fromUUID == contact?.id
+            })
+            self.collectionView.reloadData()
+            if self.messages.count > 0 {
+                let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+            }
+        } else {
+            // Fallback on earlier versions
         }
         
-        var fromID:  String?
-        if self.currentUserEmail != nil {
-            fromID = self.currentUserEmail
-        }else {
-            fromID = self.currentUserPhone
-        }
-        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let imageName = NSUUID().uuidString
-        let ref = Storage.storage().reference().child("messageImages").child(imageName)
-        
-        if let uploadData = image.jpegData(compressionQuality: 0.2) {
-            ref.putData(uploadData, metadata: nil) { (metaData, error) in
-                ref.downloadURL { (imageURL, err) in
-                    let values = ["isSeen": "false","text": "Video","videoURL": url, "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"imageHeight": image.size.height,"imageWidth": image.size.width,"imageURL": imageURL?.absoluteString, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
-                    self.uploadMsgWithValues(values: values)
+         let ref = Storage.storage().reference().child("messageImages").child(imageName)
+        if uploadData != nil {
+            ref.putData(uploadData!, metadata: nil) { (metaData, error) in
+                ref.downloadURL { (imageDownloadURL, err) in
+                    let filename = NSUUID().uuidString + ".mov"
+                               
+                    let ref = Storage.storage().reference().child("messageVideos").child(filename)
+                        let upload =  ref.putFile(from: videoURL, metadata: nil) { (metadata, err) in
+                        ref.downloadURL { (vidDownloadURL, err) in
+                            values["imageURL"] = imageDownloadURL
+                            values["videoURL"] = vidDownloadURL
+                            self.uploadMsgWithValues(values: values)
+                        }
+                    }
+                
                 }
             }
         }
         
-    }
         
-    
+//            upload.observe(.progress) { (Snapshot) in
+//                print(Snapshot.progress?.completedUnitCount)
+//            }
+    }
     
     func thumbnailForVideo(videoURL: URL) -> UIImage? {
         let asset = AVAsset(url: videoURL)
@@ -649,7 +651,10 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         super.viewDidLoad()
         observeUserMessages()
         deleteSeenMessagesFromServer()
-        
+        if self.messages.count > 0 {
+            let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+            self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+        }
         collectionView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         collectionView.register(chatBubbleCell.self, forCellWithReuseIdentifier: "chatBubble")
         collectionView.register(chatBubbleFileCell.self, forCellWithReuseIdentifier: "fileChatBubble")
@@ -705,6 +710,18 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         }
     
     override func viewWillAppear(_ animated: Bool) {
+        if #available(iOS 10.0, *) {
+            var temp = [Message]()
+            temp = coreDataManager.shared.fetchSortedMessages()
+            self.messages = temp.filter({( message : Message) -> Bool in
+                return message.toUUID==contact?.id || message.fromUUID == contact?.id
+            })
+//            self.messages = temp.filter{
+//                ($0.toUUID==contact!.id)
+//            }
+        } else {
+            // Fallback on earlier versions
+        }
         setupKeyboardObservers()
     }
         
@@ -745,29 +762,52 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         
         //textField.resignFirstResponder()
-        var toID: String?
-        if self.contact?.phone != "" {
-            toID = self.contact?.phone as String?
-        }else{
-            toID = self.contact?.email as String?
+        if msgInputField.text != "" {
+            var toID: String?
+            if self.contact?.phone != "" {
+                toID = self.contact?.phone as String?
+            }else{
+                toID = self.contact?.email as String?
+            }
+            let email = Auth.auth().currentUser?.email
+            let phone = Auth.auth().currentUser?.phoneNumber
+            var fromID:  String?
+            if email != nil {
+                fromID = email
+            }else {
+                fromID = phone
+            }
+            let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
+            let values = ["isSeen": "false","text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+             if #available(iOS 10.0, *) {
+                        coreDataManager.shared.createMessage(dictionary: values)
+                        var temp = [Message]()
+                        temp = coreDataManager.shared.fetchMessages()
+                        self.messages = temp.filter({( message : Message) -> Bool in
+                            return message.toUUID==contact?.id || message.fromUUID == contact?.id
+                        })
+            //            self.messages = temp.filter{
+            //                ($0.toUUID==contact!.id)
+            //            }
+
+                        self.collectionView.reloadData()
+                        if self.messages.count > 0 {
+                            let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                            self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+                        }
+                    } else {
+                        // Fallback on earlier versions
+                    }
+            uploadMsgWithValues(values: values)
+            msgInputField.text = nil
         }
-        let email = Auth.auth().currentUser?.email
-        let phone = Auth.auth().currentUser?.phoneNumber
-        var fromID:  String?
-        if email != nil {
-            fromID = email
-        }else {
-            fromID = phone
-        }
-        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
-        let values = ["isSeen": "false","text": msgInputField.text, "toID": toID, "fromID": fromID, "timeStamp": timeStamp, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
-        uploadMsgWithValues(values: values)
-        self.msgInputField.text = "UPLOADING MESSAGE..."
-       
+        
         return true
     }
     
      func uploadMsgWithValues(values: [String: Any]){
+       
+        
            let ref =  Database.database().reference().child("messages")
                   let childRef = ref.childByAutoId()
            childRef.updateChildValues(values)
@@ -793,6 +833,7 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
            }
         
     }
+    
     var timer = Timer()
     @IBAction func recordAudio(_ sender: Any) {
         if soundRecorder == nil {
@@ -815,6 +856,63 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         }
     }
     
+    func sendAudioMsgWithUrl(localURL: URL){
+        var toID: String?
+        if self.contact?.phone != "" {
+            toID = self.contact?.phone as String?
+        }else{
+            toID = self.contact?.email as String?
+        }
+        
+        var fromID:  String?
+        if self.currentUserEmail != nil {
+            fromID = self.currentUserEmail
+        }else {
+            fromID = self.currentUserPhone
+        }
+        let timeStamp: NSNumber = NSNumber(value: NSDate().timeIntervalSince1970)
+        var path = localURL.absoluteString
+        //path.removeLast()
+        
+        let asset = AVURLAsset(url: localURL)
+        let duration = asset.duration.seconds;
+        var values = ["isSeen": "false","filename": path,"text": "Audio","audioURL": "", "toID": toID, "fromID": fromID, "timeStamp": timeStamp,"audioDuration": duration, "fromUUID": self.currentUserUID, "toUUID": self.contact?.id] as [String : Any]
+        
+        if #available(iOS 10.0, *) {
+            coreDataManager.shared.createMessage(dictionary: values)
+            var temp = [Message]()
+            temp = coreDataManager.shared.fetchMessages()
+            self.messages = temp.filter({( message : Message) -> Bool in
+            return message.toUUID==contact?.id || message.fromUUID == contact?.id
+            })
+
+            self.collectionView.reloadData()
+            if self.messages.count > 0 {
+            let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
+                self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
+                }
+        } else{}
+        
+        let ref = Storage.storage().reference().child("messageAudios").child(localURL.lastPathComponent)
+        print("uploading audio")
+        ref.putFile(from: localURL, metadata: nil, completion: { (metadata, error) in
+                
+                if error != nil {
+                    print("Failed to upload image:", error!)
+                    return
+                }
+                
+                ref.downloadURL(completion: { (downloadURL, err) in
+                    if let err = err {
+                        print(err)
+                        return
+                    }
+                    values["audioURL"] = downloadURL?.absoluteString
+                    self.uploadMsgWithValues(values: values)
+                })
+        })
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
             super.viewDidDisappear(animated)
             
@@ -829,20 +927,26 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
         
         let seenRef = Database.database().reference().child("seenMessages").child(currentUserUID!).child((contact?.id)!)
         seenRef.observe(.childAdded) { (snapshot) in
-            print("insideDelete")
+           
             let msgID = snapshot.key
             let msgRef = Database.database().reference().child("messages").child(msgID)
             msgRef.observeSingleEvent(of: .value) { (snap) in
                 if let dictionary = snap.value as? [String: AnyObject] {
                     if (self.currentUserUID!.isEqual(dictionary["fromUUID"] as! String )) {
-                        print("messageCount: ",self.messages.count)
+                      
                         var i = (self.messages.count-1)
                         var found = false
-                        while !found {
+                        while !found && i>=0 {
                             if (self.messages[i].timeStamp?.isEqual(to: dictionary["timeStamp"] as! NSNumber ))! && self.messages[i].fromUUID == self.currentUserUID {
-                                print("Found")
+                                
                                 if self.messages[i].isSeen == "false" {
-                                    print("not seen")
+                                    
+                                    if #available(iOS 10.0, *) {
+                                        let time = dictionary["timeStamp"] as! NSNumber
+                                        coreDataManager.shared.updateMessage(timeStamp: time,key: "isSeen",value: "true")
+                                    } else {
+                                        // Fallback on earlier versions
+                                    }
                                     self.messages[i].isSeen = "true"
                                     self.collectionView.reloadData()
                                 }
@@ -878,33 +982,36 @@ class ChatLogViewController: UIViewController, UITextFieldDelegate, UICollection
             let msgRef = Database.database().reference().child("messages").child(msgID)
             msgRef.observeSingleEvent(of: .value) { (snap) in
                  if let dictionary = snap.value as? [String: AnyObject] {
-                //    print(snap)
                              var  temp = dictionary
-                    let message = Message(dictionary: dictionary)
-                    if (message.toID == self.currentUserEmail || message.toID == self.currentUserPhone) && message.isSeen == "false"{
-                        temp["isSeen"] = "true" as AnyObject
-                        msgRef.updateChildValues(temp)
-                        let seenRef = Database.database().reference().child("seenMessages").child(cID).child(uid)
-                        seenRef.updateChildValues([msgRef.key as! String: ""])
-                    }
-                   
-                    if(message.getChatPartnerID().isEqual(self.contact?.email) || message.getChatPartnerID().isEqual(self.contact?.phone)){
+                    
+                    if dictionary["toUUID"] as! String == uid  {
+                        if dictionary["isSeen"] as! String == "false"{
                         
-                        self.messages.append(message)
-                        
+                            if #available(iOS 10.0, *) {
+                               coreDataManager.shared.createMessage(dictionary: dictionary)
+                               
+                               var temp2 = [Message]()
+                               temp2 = coreDataManager.shared.fetchSortedMessages()
+                               self.messages = temp2.filter({( message : Message) -> Bool in
+                                return message.toUUID==self.contact?.id || message.fromUUID == self.contact?.id
+                               })
+                                
+                                temp["isSeen"] = "true" as AnyObject
+                                                                       msgRef.updateChildValues(temp)
+                                                                       let seenRef = Database.database().reference().child("seenMessages").child(cID).child(uid)
+                                                                       seenRef.updateChildValues([msgRef.key as! String: ""])
+                                
+                           } else {}
+                        }
+                            
                         DispatchQueue.main.async {
-                            if self.msgInputField.text == "UPLOADING MESSAGE..." {
-                                self.msgInputField.text = nil
-                            }
-                             self.collectionView.reloadData()
+                            self.collectionView.reloadData()
                             if self.messages.count > 0 {
                                 let indexPath = IndexPath(item: self.messages.count - 1, section: 0)
                                 self.collectionView?.scrollToItem(at: indexPath, at: .top, animated: true)
                             }
                         }
-    
                     }
-                   
                 }
             }
         }
@@ -983,7 +1090,7 @@ extension ChatLogViewController: AVAudioRecorderDelegate{
     
     func setupRecorder() {
         let audioFilePath = getDocumentsDirectory()?.appendingPathComponent(UUID().uuidString).appendingPathExtension("m4a")
-        
+        print("audiofilepath: ",audioFilePath)
         let recordSetting = [ AVFormatIDKey : kAudioFormatAppleLossless,
                               AVEncoderAudioQualityKey : AVAudioQuality.min.rawValue,
         AVEncoderBitRateKey : 128000,
@@ -1004,7 +1111,6 @@ extension ChatLogViewController: AVAudioRecorderDelegate{
         timer.invalidate()
         msgInputField.isEnabled = true
         recordTimer.isHidden = true
-        self.msgInputField.text = "UPLOADING MESSAGE..."
         sendAudioMsgWithUrl(localURL: recorder.url)
         self.soundRecorder = nil
     }

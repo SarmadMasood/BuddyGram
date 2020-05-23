@@ -9,6 +9,7 @@
 import UIKit
 import Firebase
 import FirebaseAuth
+import CoreData
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,6 +18,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
             FirebaseApp.configure()
+//        if #available(iOS 10.0, *) {
+//            coreDataManager.shared.deleteAll(entity: "Message")
+//        } else {
+//            // Fallback on earlier versions
+//        }
         
             return true
         }
@@ -41,7 +47,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         func applicationWillTerminate(_ application: UIApplication) {
             // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-            
+            if #available(iOS 10.0, *) {
+                coreDataManager.shared.saveContext()
+            } else {
+                // Fallback on earlier versions
+            }
         }
         
         func application(_ application: UIApplication, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: (Bool) -> Void) {

@@ -72,20 +72,48 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
     var messages = [Message]()
     
 
+    override func viewWillAppear(_ animated: Bool) {
+         if #available(iOS 10.0, *) {
+            self.messages = coreDataManager.shared.fetchMessages()
+            for message in messages {
+                let partnerID = message.getChatPartnerID()
+                                                                  
+                self.messagesDictionary[partnerID] = message
+                self.messages = Array(self.messagesDictionary.values)
+                self.messages.sort (by: { (msg1, msg2) -> Bool in
+                    return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
+                })
+                self.tableView.reloadData()
+            }
+            
+        } else {
+        // Fallback on earlier versions
+        }
+       
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+            super.viewDidDisappear(animated)
+        guard let uid = Auth.auth().currentUser?.uid else {
+                   return
+               }
+        
+        let ref = Database.database().reference().child("userMessages").child(uid)
+        let ref2 = Database.database().reference().child("messages")
+        ref.removeAllObservers()
+        ref2.removeAllObservers()
+        NotificationCenter.default.removeObserver(self)
+        if self.messages.last?.text == "New Messages" {
+            self.messages.removeLast()
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
-        
         indicator.hidesWhenStopped = true
-       // loadingView.layer.cornerRadius = 10
-       // loadingView.clipsToBounds = true
-        
-       
-       
         loadingView.isHidden = true
         loadingLabel.isHidden = true
-        
         
         observeUserMessages()
         fetchContacts()
@@ -93,11 +121,20 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
       
         if #available(iOS 10.0, *) {
             self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedString.Key.font: UIFont(name: "Arial Rounded MT Bold", size: 20)!, NSAttributedString.Key.foregroundColor: UIColor(red: 116/255, green: 41/255, blue: 148/255, alpha: 1)]
-        } else {
-            // Fallback on earlier versions
+        } else {}
+    }
+    
+    func getDocumentsDirectory() -> URL?
+    {
+        do {
+            let documentDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor:nil, create: false)
+            
+            return documentDirectory
         }
-        
-        // Do any additional setup after loading the view.
+        catch {
+            print(error)
+        }
+        return nil
     }
     
     func showChatLogForUser(contact: Contact){
@@ -126,24 +163,68 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
             let contactID = snapshot.key
             Database.database().reference().child("userMessages").child(uid).child(contactID).observe(.childAdded) { (snap) in
                 if snap.exists() {
-                    
                     let msgID = snap.key
                     let msgRef = Database.database().reference().child("messages").child(msgID)
                     msgRef.observeSingleEvent(of: .value) { (snapdoodle) in
                          if let dictionary = snapdoodle.value as? [String: AnyObject] {
-                       
-                        let message = Message(dictionary: dictionary)
-                            let partnerID = message.getChatPartnerID()
-                                            
-                            self.messagesDictionary[partnerID] = message
-                            self.messages = Array(self.messagesDictionary.values)
-                            self.messages.sort (by: { (msg1, msg2) -> Bool in
+                            
+                        if dictionary["toUUID"] as! String == uid && dictionary["isSeen"] as! String == "false"{
+                            var temp = dictionary
+                                if #available(iOS 10.0, *) {
+                                     coreDataManager.shared.createMessage(dictionary: dictionary)
+                                    
+                                    self.messages = coreDataManager.shared.fetchMessages()
+                    
+                                    let message = self.messages.last
+                                    
+                                    if message!.isSeen == "false" {
+                                        if let fileURL = message?.fileURL {
+                                            let url = URL(string: fileURL)
+                                            URLSession.shared.dataTask(with: url!, completionHandler: { (data, response, error) in
+                                                  
+                                                       if error != nil {
+                                                           print(error ?? "")
+                                                           return
+                                                       }
+                                                       
+                                                let localURL = self.getDocumentsDirectory()?.appendingPathComponent(message!.fileName!).appendingPathExtension(message!.fileExt!)
                                                 
-                                return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
-                            })
-                        }
-                        self.tableView.reloadData()
+                                                do {
+                                                    try data?.write(to: localURL!)
+                                                }catch let errorMessage {
+                                                    print(errorMessage)
+                                                }
+                                                
+                                                coreDataManager.shared.updateMessage(timeStamp: message!.timeStamp!, key: "fileURL", value: localURL!.absoluteString)
+                                            
+                                                       
+                                                   }).resume()
+                                        }
+                                        temp["isSeen"] = "true" as AnyObject
+                                        msgRef.updateChildValues(temp)
+                                        let seenRef = Database.database().reference().child("seenMessages").child(message!.fromUUID!).child(uid)
+                                        seenRef.updateChildValues([msgRef.key as! String: ""])
+                                    }
+                                    
+                                    let partnerID = message!.getChatPartnerID()
+                                    self.messagesDictionary[partnerID] = message
+                                    self.messages = Array(self.messagesDictionary.values)
+                                    self.messages.sort (by: { (msg1, msg2) -> Bool in
+                                        return msg1.timeStamp!.intValue > msg2.timeStamp?.intValue as! Int
+                                    })
+                                    DispatchQueue.main.async {
+                                          self.tableView.reloadData()
+                                   }
+                    
+                    
+                                 } else {
+                                     // Fallback on earlier versions
+                                 }
+                            }
+                        
                     }
+                }
+
                 }
             }
         }
@@ -216,3 +297,4 @@ class chatsViewController: UIViewController, UITableViewDataSource, UITableViewD
     }
 
 }
+
