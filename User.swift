@@ -2,14 +2,16 @@
 //  User.swift
 //  BuddyGram
 //
-//  Created by Mac OSX on 4/24/20.
+//  Created by Sarmad on 04/07/2020.
 //  Copyright © 2020 Mac OSX. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 class User: NSObject {
-    var email: String?
+    var id: String?
     var name: String?
-    var password: String?
+    var phone: String?
+    var email: NSString?
+    var imageURL: String?
 }

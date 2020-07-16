@@ -20,25 +20,27 @@ class ViewController: UIViewController ,UITextFieldDelegate{
     @IBOutlet weak var mailField: UITextField!
     @IBOutlet weak var passField: UITextField!
     @IBAction func signInAction(_ sender: Any) {
-//        Auth.auth().signIn(withEmail: mailField.text ?? "", password: passField.text ?? "", completion: {(result,error) in
-//            if error != nil {
-//                let inputAlert = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: .alert)
-//
-//                let cancelAction = UIAlertAction(title: "OK", style: .default,handler: nil)
-//                inputAlert.addAction(cancelAction)
-//
-//                self.present(inputAlert, animated: true, completion: nil)
-//            }
-//            else{
-//                let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
-//                vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
-//                self.present(vc, animated: true, completion: nil)
-//            }
-//        })
+        Auth.auth().signIn(withEmail: mailField.text ?? "", password: passField.text ?? "", completion: {(result,error) in
+            if error != nil {
+                let inputAlert = UIAlertController(title: "Error", message: error?.localizedDescription, preferredStyle: .alert)
 
-        let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
-                        vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
-                        self.present(vc, animated: true, completion: nil)
+                let cancelAction = UIAlertAction(title: "OK", style: .default,handler: nil)
+                inputAlert.addAction(cancelAction)
+
+                self.present(inputAlert, animated: true, completion: nil)
+            }
+            else{
+                let defaultValue = UserDefaults.standard
+                defaultValue.set(true, forKey: "isloggedin")
+                let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
+                vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
+                self.present(vc, animated: true, completion: nil)
+            }
+        })
+
+//        let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! HomeViewController
+//                        vc.modalPresentationStyle = .fullScreen //or .overFullScreen for transparency
+//                        self.present(vc, animated: true, completion: nil)
 
     }
     
@@ -51,7 +53,8 @@ class ViewController: UIViewController ,UITextFieldDelegate{
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let defaultValue = UserDefaults.standard
+        defaultValue.set(false, forKey: "isloggedin")
         // Do any additional setup after loading the view.
         passField.isSecureTextEntry = true
         mailField.attributedPlaceholder = NSAttributedString(string: "Email", attributes: [NSAttributedString.Key.foregroundColor: UIColor.white])

@@ -2,7 +2,7 @@
 //  Message+CoreDataProperties.swift
 //  
 //
-//  Created by Mac OSX on 5/23/20.
+//  Created by Sarmad on 04/07/2020.
 //
 //
 
@@ -27,10 +27,12 @@ extension Message {
     @NSManaged public var imageURL: String?
     @NSManaged public var imageWidth: NSNumber?
     @NSManaged public var isSeen: String?
+    @NSManaged public var replyTimeStamp: NSNumber?
     @NSManaged public var text: String?
     @NSManaged public var timeStamp: NSNumber?
     @NSManaged public var toID: String?
     @NSManaged public var toUUID: String?
     @NSManaged public var videoURL: String?
+    @NSManaged public var groupID: String?
 
 }

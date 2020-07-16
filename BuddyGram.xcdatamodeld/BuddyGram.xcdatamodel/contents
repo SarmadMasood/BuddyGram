@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="15702" systemVersion="19C57" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="15702" systemVersion="18G103" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Contact" representedClassName="Contact" syncable="YES">
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="groups" optional="YES" attributeType="Transformable"/>
+        <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="imageURL" optional="YES" attributeType="String"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="Group" representedClassName="Group" syncable="YES">
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="members" optional="YES" attributeType="Transformable"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+    </entity>
     <entity name="Message" representedClassName="Message" syncable="YES">
         <attribute name="audioDuration" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="audioURL" optional="YES" attributeType="String"/>
@@ -8,10 +22,12 @@
         <attribute name="fileURL" optional="YES" attributeType="String"/>
         <attribute name="fromID" optional="YES" attributeType="String"/>
         <attribute name="fromUUID" optional="YES" attributeType="String"/>
+        <attribute name="groupID" optional="YES" attributeType="String"/>
         <attribute name="imageHeight" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="imageURL" optional="YES" attributeType="String"/>
         <attribute name="imageWidth" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="isSeen" optional="YES" attributeType="String"/>
+        <attribute name="replyTimeStamp" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="text" optional="YES" attributeType="String"/>
         <attribute name="timeStamp" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="toID" optional="YES" attributeType="String"/>
@@ -19,6 +35,8 @@
         <attribute name="videoURL" optional="YES" attributeType="String"/>
     </entity>
     <elements>
-        <element name="Message" positionX="-54" positionY="-9" width="128" height="283"/>
+        <element name="Contact" positionX="-54" positionY="126" width="128" height="133"/>
+        <element name="Group" positionX="262.56640625" positionY="154.06640625" width="115.15625" height="103"/>
+        <element name="Message" positionX="-252.8515625" positionY="229.80859375" width="128" height="313"/>
     </elements>
 </model>

@@ -9,5 +9,6 @@ target 'BuddyGram' do
 pod 'Firebase/Database'
 pod 'Firebase/Auth'
 pod 'Firebase/Storage'
+pod 'RNCryptor', '~> 5.0'
 
 end

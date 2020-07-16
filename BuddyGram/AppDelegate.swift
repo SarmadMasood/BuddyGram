@@ -18,12 +18,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
             FirebaseApp.configure()
-//        if #available(iOS 10.0, *) {
-//            coreDataManager.shared.deleteAll(entity: "Message")
-//        } else {
-//            // Fallback on earlier versions
-//        }
         
+        let defaultValue = UserDefaults.standard
+        let isLoggedIn = defaultValue.bool(forKey: "isloggedin")
+        if isLoggedIn {
+            let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+            let viewController = mainStoryboard.instantiateViewController(withIdentifier: "home") as! HomeViewController
+            window = UIWindow(frame: UIScreen.main.bounds)
+            window?.makeKeyAndVisible()
+            window?.rootViewController = viewController
+        }
             return true
         }
 

@@ -65,14 +65,12 @@ class CreateAccountViewController: UIViewController {
                             print(err!)
                             return
                         }
-                        
-                        //            self.messagesController?.fetchUserAndSetupNavBarTitle()
-                        //            self.messagesController?.navigationItem.title = values["name"] as? String
                        
                         self.dismiss(animated: true, completion: nil)
                     })
                 }
             }
+            
         }else{
                 let inputAlert = UIAlertController(title: "Error", message: "Password and confirm password don't match.", preferredStyle: .alert)
             

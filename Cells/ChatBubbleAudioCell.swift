@@ -12,9 +12,12 @@ import AVFoundation
 
 let audioCache = NSCache<NSString, NSString>()
 
+@available(iOS 10.0, *)
 class ChatBubbleAudioCell: UICollectionViewCell, AVAudioPlayerDelegate {
     
     var message: Message!
+    var chatLogVC: ChatLogViewController!
+    var groupChatVC: GroupChatViewController!
     let currentUserEmail = Auth.auth().currentUser?.email
     let currentUserPhone = Auth.auth().currentUser?.phoneNumber
     let currentUserUID = Auth.auth().currentUser?.uid
@@ -79,28 +82,21 @@ override func observeValue(forKeyPath keyPath: String?, of object: Any?, change:
     
     func setupPlayer() {
         var urlPath: URL?
-        if message.fromUUID == currentUserUID {
-            if let file = message.fileName {
-                urlPath = URL(string: file)
-            }
-        }else {
-            if let url = message.audioURL {
-                urlPath = URL(string: url)
-            }
+        if let url = message.audioURL {
+            urlPath = URL(string: url)
         }
-        
         
         let playerItem = AVPlayerItem( url: urlPath!)
         player = AVPlayer(playerItem:playerItem)
         player!.addObserver(self, forKeyPath: "status", options: [.old, .new], context: nil)
         player!.rate = 1.0
         player?.addPeriodicTimeObserver(forInterval: CMTime.init(value: 1, timescale: 1), queue: .main, using: { (time) in
-            var timeNow = Int(time.value) / Int(time.timescale)
+            let timeNow = Int(time.value) / Int(time.timescale)
 
-            var currentMins = timeNow / 60
-            var currentSec = timeNow % 60
+            let currentMins = timeNow / 60
+            let currentSec = timeNow % 60
 
-            var timer = String(format: "%02i:%02i", currentMins,currentSec)
+            let timer = String(format: "%02i:%02i", currentMins,currentSec)
 
             self.timerLabel.text = timer
             
@@ -120,21 +116,29 @@ override func observeValue(forKeyPath keyPath: String?, of object: Any?, change:
         playPauseButton.setImage(UIImage(named: "Play"), for: .normal)
         slider.value = 0
     
-        let duration = message.audioDuration
-        var currentMins = Int(duration!) / 60
-        var currentSec = Int(duration!) % 60
+    let currentMins = Int(message.audioDuration!) / 60
+    let currentSec = Int(message.audioDuration!) % 60
 
-        var timer = String(format: "%02i:%02i", currentMins,currentSec)
-
+        let timer = String(format: "%02i:%02i", currentMins,currentSec)
         timerLabel.text = timer
     }
     
-    let bubbleView: UIView = {
-           let v = UIView()
-           v.backgroundColor = UIColor.purple
-           v.translatesAutoresizingMaskIntoConstraints = false
-           return v
-       }()
+    lazy var bubbleView: UIView = {
+        let v = UIView()
+        v.backgroundColor = UIColor.purple
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = true
+        v.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(replyAction)))
+        return v
+    }()
+    
+    @objc func replyAction(){
+        if message.groupID == nil {
+            chatLogVC.presentReplyAction(message: message)
+        }else{
+            groupChatVC.presentReplyAction(message: message)
+        }
+    }
     
     let slider: UISlider = {
        let s = UISlider()
@@ -162,13 +166,24 @@ override func observeValue(forKeyPath keyPath: String?, of object: Any?, change:
         return ind
     }()
     
+    let groupUser: UILabel = {
+        let label = UILabel()
+        label.text = "~group user"
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor.gray
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.backgroundColor = UIColor.clear
+        label.isHidden = true
+        return label
+    }()
     
     var bubbleWidthAnchor: NSLayoutConstraint?
     var bubbleHeightAnchor: NSLayoutConstraint?
     var bubbleRightAnchor: NSLayoutConstraint?
     var bubbleLeftAnchor: NSLayoutConstraint?
     var readReceiptWidth: NSLayoutConstraint?
-    
+    var groupAnchor: NSLayoutConstraint?
+    var nonGroupAnchor: NSLayoutConstraint?
        
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -177,28 +192,31 @@ override func observeValue(forKeyPath keyPath: String?, of object: Any?, change:
         addSubview(timerLabel)
         addSubview(msgTime)
         addSubview(readReceipt)
-        addSubview(timerLabel)
+        addSubview(groupUser)
         
-           
+        groupUser.topAnchor.constraint(equalTo: bubbleView.topAnchor,constant: 3).isActive = true
+        groupUser.leftAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: 5).isActive = true
+        
+        bubbleView.addSubview(slider)
+        slider.heightAnchor.constraint(equalToConstant: 10).isActive = true
+        slider.rightAnchor.constraint(equalTo: self.bubbleView.rightAnchor, constant: -10).isActive = true
+        groupAnchor = slider.topAnchor.constraint(equalTo: groupUser.bottomAnchor, constant: 15)
+        groupAnchor!.isActive = false
+        nonGroupAnchor = slider.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 15)
+        nonGroupAnchor!.isActive = true
+        
         bubbleView.addSubview(playPauseButton)
         playPauseButton.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor, constant: 15).isActive = true
-        playPauseButton.topAnchor.constraint(equalTo: self.bubbleView.topAnchor, constant: 7).isActive = true
+        playPauseButton.rightAnchor.constraint(equalTo: self.slider.leftAnchor, constant: -10).isActive = true
+        playPauseButton.centerYAnchor.constraint(equalTo: self.slider.centerYAnchor).isActive = true
         playPauseButton.widthAnchor.constraint(equalToConstant: 20).isActive = true
         playPauseButton.heightAnchor.constraint(equalToConstant: 20).isActive = true
         
         bubbleView.addSubview(indicator)
         indicator.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor, constant: 15).isActive = true
-        indicator.topAnchor.constraint(equalTo: self.bubbleView.topAnchor, constant: 7).isActive = true
+        indicator.centerYAnchor.constraint(equalTo: self.slider.centerYAnchor).isActive = true
         indicator.widthAnchor.constraint(equalToConstant: 20).isActive = true
         indicator.heightAnchor.constraint(equalToConstant: 20).isActive = true
-           
-        bubbleView.addSubview(slider)
-        slider.leftAnchor.constraint(equalTo: self.playPauseButton.rightAnchor, constant: 10).isActive = true
-        slider.heightAnchor.constraint(equalToConstant: 10).isActive = true
-       // slider.widthAnchor.constraint(equalToConstant: 150).isActive = true
-        slider.rightAnchor.constraint(equalTo: self.bubbleView.rightAnchor, constant: -10).isActive = true
-        slider.topAnchor.constraint(equalTo: self.bubbleView.topAnchor, constant: 15).isActive = true
-        slider.centerYAnchor.constraint(equalTo: self.playPauseButton.centerYAnchor).isActive = true
         
         bubbleRightAnchor = bubbleView.rightAnchor.constraint(equalTo: self.rightAnchor,constant: -8)
         bubbleLeftAnchor = bubbleView.leftAnchor.constraint(equalTo: self.leftAnchor,constant: 8)

@@ -8,7 +8,12 @@
 
 import UIKit
 
+@available(iOS 10.0, *)
 class chatBubbleFileCell: UICollectionViewCell {
+    var message: Message!
+    var chatLogVC: ChatLogViewController!
+    var groupChatVC: GroupChatViewController!
+    
     let msgTime: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 13)
@@ -47,12 +52,42 @@ class chatBubbleFileCell: UICollectionViewCell {
         return label
     }()
     
-    let bubbleView: UIView = {
+    lazy var bubbleView: UIView = {
         let v = UIView()
         v.backgroundColor = UIColor.purple
         v.translatesAutoresizingMaskIntoConstraints = false
+        v.isUserInteractionEnabled = true
+        v.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(viewFile)))
+        v.addGestureRecognizer(UILongPressGestureRecognizer(target: self, action: #selector(replyAction)))
         return v
     }()
+    
+    let groupUser: UILabel = {
+        let label = UILabel()
+        label.text = "~group user"
+        label.font = UIFont.systemFont(ofSize: 15)
+        label.textColor = UIColor.gray
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.backgroundColor = UIColor.clear
+        label.isHidden = true
+        return label
+    }()
+    
+    @objc func replyAction(){
+        if message.groupID == nil {
+            chatLogVC.presentReplyAction(message: message)
+        }else{
+            groupChatVC.presentReplyAction(message: message)
+        }
+    }
+    
+    @objc func viewFile(){
+        if message.groupID == nil {
+            chatLogVC.viewFile(message: message)
+        }else{
+            groupChatVC.viewFile(message: message)
+        }
+    }
     
     let imageView: UIImageView = {
         let imv = UIImageView()
@@ -71,6 +106,8 @@ class chatBubbleFileCell: UICollectionViewCell {
     var bubbleRightAnchor: NSLayoutConstraint?
     var bubbleLeftAnchor: NSLayoutConstraint?
     var readReceiptWidth: NSLayoutConstraint?
+    var groupAnchor: NSLayoutConstraint?
+    var nonGroupAnchor: NSLayoutConstraint?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -81,6 +118,10 @@ class chatBubbleFileCell: UICollectionViewCell {
         bubbleView.addSubview(imageView)
         bubbleView.addSubview(nameLabel)
         imageView.addSubview(extLabel)
+        addSubview(groupUser)
+        
+        groupUser.topAnchor.constraint(equalTo: bubbleView.topAnchor,constant: 3).isActive = true
+        groupUser.leftAnchor.constraint(equalTo: bubbleView.leftAnchor, constant: 5).isActive = true
         
         extLabel.centerXAnchor.constraint(equalTo: imageView.centerXAnchor).isActive = true
         extLabel.centerYAnchor.constraint(equalTo: imageView.centerYAnchor).isActive = true
@@ -88,11 +129,14 @@ class chatBubbleFileCell: UICollectionViewCell {
         imageView.leftAnchor.constraint(equalTo: self.bubbleView.leftAnchor,constant: 10).isActive = true
         imageView.widthAnchor.constraint(equalToConstant: 35).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: 50).isActive = true
-        imageView.centerYAnchor.constraint(equalTo: self.bubbleView.centerYAnchor).isActive = true
+        groupAnchor = imageView.topAnchor.constraint(equalTo: groupUser.bottomAnchor, constant: 5)
+        groupAnchor!.isActive = false
+        nonGroupAnchor = imageView.topAnchor.constraint(equalTo: bubbleView.topAnchor, constant: 10)
+        nonGroupAnchor!.isActive = true
         
-        nameLabel.centerYAnchor.constraint(equalTo: self.bubbleView.centerYAnchor).isActive = true
-        nameLabel.leftAnchor.constraint(equalTo: imageView.rightAnchor, constant: 10).isActive = true
-        nameLabel.rightAnchor.constraint(equalTo: bubbleView.rightAnchor, constant: -8).isActive = true
+        nameLabel.centerYAnchor.constraint(equalTo: imageView.centerYAnchor).isActive = true
+        nameLabel.leftAnchor.constraint(equalTo: imageView.rightAnchor, constant: 5).isActive = true
+        nameLabel.rightAnchor.constraint(equalTo: bubbleView.rightAnchor).isActive = true
         
         bubbleRightAnchor = bubbleView.rightAnchor.constraint(equalTo: self.rightAnchor,constant: -8)
         bubbleLeftAnchor = bubbleView.leftAnchor.constraint(equalTo: self.leftAnchor,constant: 8)

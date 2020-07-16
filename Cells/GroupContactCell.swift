@@ -1,16 +1,15 @@
 //
-//  ContactTableViewCell.swift
+//  GroupContactCell.swift
 //  BuddyGram
 //
-//  Created by Mac OSX on 4/23/20.
+//  Created by Sarmad on 04/07/2020.
 //  Copyright © 2020 Mac OSX. All rights reserved.
 //
 
 import UIKit
 
-class ContactTableViewCell: UITableViewCell {
+class GroupContactCell: UITableViewCell {
 
-   
     @IBOutlet weak var nameLabel: UILabel!
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -19,7 +18,7 @@ class ContactTableViewCell: UITableViewCell {
 
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
-
+        
         // Configure the view for the selected state
     }
 
